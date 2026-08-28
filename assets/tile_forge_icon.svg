@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Slate Linear Gradient -->
+    <linearGradient id="bgSlate" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#252A36" />
+      <stop offset="50%" stop-color="#1A1E27" />
+      <stop offset="100%" stop-color="#12151C" />
+    </linearGradient>
+
+    <!-- Center Radial Warm Aura -->
+    <radialGradient id="centerAura" cx="50%" cy="46%" r="45%">
+      <stop offset="0%" stop-color="#FF9100" stop-opacity="0.55" />
+      <stop offset="50%" stop-color="#FF6D00" stop-opacity="0.25" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Cyan Arcane Energy Ring -->
+    <linearGradient id="cyanHalo" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00E5FF" />
+      <stop offset="100%" stop-color="#00B0FF" />
+    </linearGradient>
+
+    <!-- Amber Floating Rune Tile Gradient -->
+    <linearGradient id="runeTileGrad" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#FFE57F" />
+      <stop offset="40%" stop-color="#FFB300" />
+      <stop offset="100%" stop-color="#FF6D00" />
+    </linearGradient>
+
+    <!-- Forged Anvil Metal Gradient -->
+    <linearGradient id="anvilIronGrad" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#475266" />
+      <stop offset="40%" stop-color="#333B4A" />
+      <stop offset="100%" stop-color="#212732" />
+    </linearGradient>
+
+    <!-- Molten Glowing Gold Pool -->
+    <linearGradient id="moltenGold" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#FFE082" />
+      <stop offset="45%" stop-color="#FFB300" />
+      <stop offset="100%" stop-color="#FF6D00" />
+    </linearGradient>
+
+    <!-- Glow Drop Shadow Filter -->
+    <filter id="tileGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="0" stdDeviation="12" flood-color="#FFA000" flood-opacity="0.75" />
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#000000" flood-opacity="0.6" />
+    </filter>
+
+    <filter id="anvilShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#000000" flood-opacity="0.7" />
+    </filter>
+  </defs>
+
+  <!-- 1. Background Rounded Tile -->
+  <rect x="16" y="16" width="480" height="480" rx="100" ry="100" fill="url(#bgSlate)" stroke="#323B4C" stroke-width="10" />
+
+  <!-- Corner Insets -->
+  <line x1="85" y1="85" x2="140" y2="140" stroke="#2D3545" stroke-width="5" stroke-linecap="round" />
+  <line x1="427" y1="85" x2="372" y2="140" stroke="#2D3545" stroke-width="5" stroke-linecap="round" />
+  <line x1="85" y1="427" x2="140" y2="372" stroke="#2D3545" stroke-width="5" stroke-linecap="round" />
+  <line x1="427" y1="427" x2="372" y2="372" stroke="#2D3545" stroke-width="5" stroke-linecap="round" />
+
+  <!-- Outer Frame Ring -->
+  <circle cx="256" cy="256" r="195" fill="none" stroke="#2A3241" stroke-width="7" />
+
+  <!-- Center Heat Aura -->
+  <circle cx="256" cy="235" r="150" fill="url(#centerAura)" />
+
+  <!-- Cyan Arcane Ring -->
+  <circle cx="256" cy="215" r="130" fill="none" stroke="url(#cyanHalo)" stroke-width="8" stroke-opacity="0.75" />
+
+  <!-- Ember Spark Particles -->
+  <polygon points="175,130 183,145 175,160 167,145" fill="#FFA726" />
+  <polygon points="337,120 345,135 337,150 329,135" fill="#FFD54F" />
+  <polygon points="146,205 152,215 146,225 140,215" fill="#FF7043" />
+  <polygon points="366,195 374,208 366,221 358,208" fill="#FFA726" />
+  <polygon points="218,85 223,95 218,105 213,95" fill="#FFE082" />
+  <polygon points="294,90 299,100 294,110 289,100" fill="#FFCA28" />
+
+  <!-- 2. Floating Diamond Runic Tile -->
+  <g filter="url(#tileGlow)">
+    <!-- Base Runic Tile Body -->
+    <polygon points="256,98 338,180 256,262 174,180" fill="url(#runeTileGrad)" stroke="#1E232E" stroke-width="12" stroke-linejoin="round" />
+    
+    <!-- Bevel Top Highlight -->
+    <polygon points="256,108 324,176 314,176 256,118 198,176 188,176" fill="#FFFFFF" fill-opacity="0.45" />
+
+    <!-- Circuit Rune Track -->
+    <path d="M256,132 L280,156 L280,180 M256,228 L232,204 L232,180 M212,165 L232,165 M300,195 L280,195" 
+          fill="none" stroke="#00E5FF" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" />
+    
+    <!-- Central Node -->
+    <circle cx="256" cy="180" r="16" fill="#00E5FF" stroke="#0288D1" stroke-width="6" />
+    <circle cx="256" cy="180" r="6" fill="#FFFFFF" />
+  </g>
+
+  <!-- 3. Blacksmith Anvil -->
+  <g filter="url(#anvilShadow)">
+    <!-- Main Anvil Body -->
+    <path d="M109,268 L389,268 C403,268 408,280 398,290 L389,300 L379,319 L322,319 C310,338 310,367 341,382 L355,391 L355,410 C355,417 348,422 341,422 L171,422 C164,422 157,417 157,410 L157,391 L171,382 C202,367 202,338 190,319 L152,319 C138,319 121,314 112,309 L81,285 C74,278 86,268 109,268 Z"
+          fill="url(#anvilIronGrad)" stroke="#161B24" stroke-width="14" stroke-linejoin="round" />
+
+    <!-- Metallic Highlights -->
+    <line x1="114" y1="274" x2="384" y2="274" stroke="#687894" stroke-width="5" stroke-linecap="round" />
+    <line x1="166" y1="394" x2="346" y2="394" stroke="#687894" stroke-width="5" stroke-linecap="round" />
+    <line x1="180" y1="413" x2="332" y2="413" stroke="#687894" stroke-width="5" stroke-linecap="round" />
+
+    <!-- 4. Glowing Molten Liquid Flowing on Anvil Face -->
+    <path d="M190,268 C200,268 205,273 214,287 C224,301 243,315 256,315 C269,315 288,301 298,287 C307,273 312,268 331,268 L369,268 C350,282 331,287 317,287 C303,287 298,301 288,311 C274,325 238,325 224,311 C214,301 209,287 195,287 C181,287 162,282 143,268 Z"
+          fill="url(#moltenGold)" />
+
+    <!-- Bright Core Molten Drip -->
+    <path d="M204,268 C214,268 218,273 223,282 C233,296 247,306 256,306 C265,306 279,296 289,282 C294,273 298,268 308,268 Z"
+          fill="#FFF59D" />
+    <path d="M228,270 C238,270 247,278 256,278 C265,278 274,270 284,270 Z"
+          fill="#FFFFFF" />
+  </g>
+</svg>
