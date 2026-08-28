@@ -1,0 +1,6 @@
+{
+  "name": "Tile Forge",
+  "description": "A strategic puzzle game where players slide numbered tiles across a dynamic 4x4 board to gather energy, combine compatible values, and forge powerful artifacts.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
