@@ -1,4 +1,4 @@
-# <align="center">🔥 Tile Forge
+# Tile Forge
 
 <p align="center">
   <strong>Slide • Merge • Gather Energy • Forge Relics</strong><br>
