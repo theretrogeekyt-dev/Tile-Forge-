@@ -20,6 +20,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -111,6 +115,7 @@ fun GameScreen(
             Row(
                 modifier = Modifier
                     .fillMaxSize()
+                    .windowInsetsPadding(if (uiState.isImmersiveModeEnabled) WindowInsets.displayCutout else WindowInsets.safeDrawing)
                     .padding(horizontal = 14.dp, vertical = 6.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
@@ -202,6 +207,8 @@ fun GameScreen(
                     .fillMaxSize()
                     .widthIn(max = 520.dp)
                     .align(Alignment.Center)
+                    .windowInsetsPadding(if (uiState.isImmersiveModeEnabled) WindowInsets.displayCutout else WindowInsets.safeDrawing)
+                    .padding(horizontal = 6.dp, vertical = if (isShortScreen) 4.dp else 6.dp)
                     .then(scrollModifier),
                 verticalArrangement = if (isShortScreen) Arrangement.Top else Arrangement.SpaceBetween,
                 horizontalAlignment = Alignment.CenterHorizontally

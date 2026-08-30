@@ -122,18 +122,17 @@ fun GameBoardView(
     }
 
     BoxWithConstraints(
-        modifier = modifier
-            .widthIn(max = 480.dp)
-            .aspectRatio(1f)
-            .padding(horizontal = 10.dp, vertical = 4.dp),
+        modifier = modifier.padding(horizontal = 8.dp, vertical = 4.dp),
         contentAlignment = Alignment.Center
     ) {
-        val boardPadding = if (maxWidth < 320.dp) 6.dp else 10.dp
-        val cellSpacing = if (maxWidth < 320.dp) 5.dp else 8.dp
+        val availableHeight = if (maxHeight != androidx.compose.ui.unit.Dp.Infinity && maxHeight > 0.dp) maxHeight else maxWidth
+        val boardDim = minOf(maxWidth, availableHeight, 480.dp)
+        val boardPadding = if (boardDim < 320.dp) 6.dp else 10.dp
+        val cellSpacing = if (boardDim < 320.dp) 5.dp else 8.dp
 
         Box(
             modifier = Modifier
-                .fillMaxSize()
+                .size(boardDim)
                 .offset {
                     IntOffset(
                         nudgeOffsetX.value.roundToInt(),

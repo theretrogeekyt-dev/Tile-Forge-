@@ -27,6 +27,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -163,6 +167,7 @@ fun MainMenuScreen(
             Row(
                 modifier = Modifier
                     .fillMaxSize()
+                    .windowInsetsPadding(if (uiState.isImmersiveModeEnabled) WindowInsets.displayCutout else WindowInsets.safeDrawing)
                     .padding(horizontal = 24.dp, vertical = 10.dp),
                 horizontalArrangement = Arrangement.spacedBy(20.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -261,6 +266,7 @@ fun MainMenuScreen(
                     .fillMaxSize()
                     .widthIn(max = 440.dp)
                     .align(Alignment.Center)
+                    .windowInsetsPadding(if (uiState.isImmersiveModeEnabled) WindowInsets.displayCutout else WindowInsets.safeDrawing)
                     .padding(
                         horizontal = 16.dp,
                         vertical = if (isCompactScreen) 6.dp else 10.dp
