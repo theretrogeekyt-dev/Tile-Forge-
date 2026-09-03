@@ -103,6 +103,15 @@ class GameBoard {
         moves = snapshot.moves
         hearts = snapshot.hearts
         isGameOver = false
+
+        var maxTile = 2
+        for (r in 0 until size) {
+            for (c in 0 until size) {
+                val v = grid[r][c]?.value ?: 0
+                if (v > maxTile) maxTile = v
+            }
+        }
+        highestTileValue = maxTile
         return true
     }
 
@@ -310,11 +319,24 @@ class GameBoard {
 
             if (randomArtifact == ArtifactType.AEGIS_SHIELD) {
                 hasAegisShield = true
+                if (hearts < maxHearts) {
+                    hearts++
+                }
             } else if (randomArtifact == ArtifactType.MIDAS_RING) {
                 midasTurnsLeft += 5
             } else if (randomArtifact == ArtifactType.CHRONOS_RELIC) {
                 // Grant 5 extra moves back in challenge mode!
                 moves = maxOf(0, moves - 5)
+            } else if (randomArtifact == ArtifactType.IGNIS_EMBER) {
+                // Immediately burns low value (2 & 4) standard tiles
+                for (rr in 0 until size) {
+                    for (cc in 0 until size) {
+                        val t = grid[rr][cc]
+                        if (t != null && t.type == TileType.STANDARD && t.value <= 4) {
+                            grid[rr][cc] = null
+                        }
+                    }
+                }
             }
 
             val newTile = Tile(
@@ -473,7 +495,8 @@ class GameBoard {
         return true
     }
 
-    fun activateIgnisEmberArtifact(): Boolean {
+    fun activateIgnisEmberArtifact(energyCost: Int = 30): Boolean {
+        if (energy < energyCost) return false
         var removed = 0
         for (r in 0 until size) {
             for (c in 0 until size) {
@@ -484,8 +507,13 @@ class GameBoard {
                 }
             }
         }
-        score += removed * 20
-        return removed > 0
+        if (removed > 0) {
+            energy -= energyCost
+            score += removed * 20
+            checkGameOverOrRescue()
+            return true
+        }
+        return false
     }
 
     private fun getRandomEmptySlot(): Pair<Int, Int>? {

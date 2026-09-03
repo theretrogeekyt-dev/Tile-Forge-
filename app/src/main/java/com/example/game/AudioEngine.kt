@@ -159,11 +159,15 @@ class AudioEngine {
 
         track.write(samples, 0, samples.size)
         track.play()
-        // Release track after playback completes
+        // Release track safely after playback completes
         scope.launch {
             kotlinx.coroutines.delay(samples.size * 1000L / sampleRate + 50)
-            track.stop()
-            track.release()
+            try {
+                track.stop()
+                track.release()
+            } catch (_: Exception) {
+                // Safeguard against AudioTrack recycling race conditions
+            }
         }
     }
 }

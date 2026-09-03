@@ -135,9 +135,9 @@ fun PowerUpActionBar(
 
             PowerItem(
                 title = "Ignis Burn",
-                cost = "FREE",
+                cost = "30⚡",
                 icon = Icons.Filled.LocalFireDepartment,
-                isEnoughEnergy = true,
+                isEnoughEnergy = energy >= 30,
                 isSelected = false,
                 accentColor = Color(0xFFFF6E40),
                 theme = theme,

@@ -405,8 +405,13 @@ fun GameScreen(
                 highestTile = uiState.highestTile,
                 energyCollected = uiState.energy,
                 gameMode = uiState.gameMode,
+                canUndo = uiState.energy >= 15 && !isVictory,
+                onUndo = {
+                    viewModel.handleUndo()
+                    viewModel.dismissGameOver()
+                },
                 onRestart = { viewModel.restartCurrentGame() },
-                onNextLevel = if (isVictory && uiState.currentLevelId < 10) {
+                onNextLevel = if (isVictory && uiState.currentLevelId < 15) {
                     { viewModel.startNewGame(GameModeType.CHALLENGE, uiState.currentLevelId + 1) }
                 } else null,
                 onBackToMenu = onNavigateBack,

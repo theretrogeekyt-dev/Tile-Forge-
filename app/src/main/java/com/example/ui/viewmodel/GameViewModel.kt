@@ -76,6 +76,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     val gameBoard = GameBoard()
     val audioEngine = AudioEngine()
     val zipBackupManager = com.example.data.backup.LocalZipBackupManager(application)
+    private val prefs = application.getSharedPreferences("tileforge_settings", android.content.Context.MODE_PRIVATE)
 
     private val _uiState = MutableStateFlow(GameUiState())
     val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()
@@ -87,6 +88,18 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     init {
         val db = TileForgeDatabase.getDatabase(application)
         repository = GameRepository(db.gameDao())
+
+        // Load saved audio & immersive settings
+        val savedSound = prefs.getBoolean("sound_fx", true)
+        val savedMusic = prefs.getBoolean("music", true)
+        val savedImmersive = prefs.getBoolean("immersive", false)
+        audioEngine.soundFxEnabled = savedSound
+        audioEngine.musicEnabled = savedMusic
+        _uiState.value = _uiState.value.copy(
+            soundFxEnabled = savedSound,
+            musicEnabled = savedMusic,
+            isImmersiveModeEnabled = savedImmersive
+        )
 
         gameStats = repository.gameStats.stateIn(
             scope = viewModelScope,
@@ -172,6 +185,11 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 GameModeType.ENDLESS -> "Endless Forge Started!"
             }
         )
+
+        viewModelScope.launch {
+            val stats = repository.getGameStatsDirect() ?: GameStatsEntity()
+            repository.saveGameStats(stats.copy(totalGamesPlayed = stats.totalGamesPlayed + 1))
+        }
     }
 
     fun handleSwipe(direction: SwipeDirection) {
@@ -285,16 +303,22 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             audioEngine.playPowerSound()
             showNotification("Move Reverted (-15⚡)")
             updateStateFromBoard()
+            saveCurrentStats()
         } else {
             showNotification("Need 15⚡ Energy to Undo!")
         }
     }
 
     fun activateIgnisAbility() {
-        if (gameBoard.activateIgnisEmberArtifact()) {
+        if (gameBoard.energy < 30) {
+            showNotification("Need 30⚡ Energy for Ignis Burn!")
+            return
+        }
+        if (gameBoard.activateIgnisEmberArtifact(30)) {
             audioEngine.playForgeSound()
-            showNotification("Ignis Ember Destroyed Low Tiles!")
+            showNotification("Ignis Ember Burned Low Tiles! (-30⚡)")
             updateStateFromBoard()
+            saveCurrentStats()
         } else {
             showNotification("No 2 or 4 tiles to burn!")
         }
@@ -373,6 +397,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val newSetting = !_uiState.value.soundFxEnabled
         _uiState.value = _uiState.value.copy(soundFxEnabled = newSetting)
         audioEngine.soundFxEnabled = newSetting
+        prefs.edit().putBoolean("sound_fx", newSetting).apply()
     }
 
     fun toggleImmersiveMode() {
@@ -381,12 +406,14 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             isImmersiveModeEnabled = newSetting,
             notificationMessage = if (newSetting) "✨ Immersive Fullscreen Mode Enabled" else "Immersive Mode Disabled"
         )
+        prefs.edit().putBoolean("immersive", newSetting).apply()
     }
 
     fun toggleMusic() {
         val newSetting = !_uiState.value.musicEnabled
         _uiState.value = _uiState.value.copy(musicEnabled = newSetting)
         audioEngine.musicEnabled = newSetting
+        prefs.edit().putBoolean("music", newSetting).apply()
     }
 
     fun dismissAllDialogs() {

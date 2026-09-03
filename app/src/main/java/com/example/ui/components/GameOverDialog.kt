@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.PlayArrow
@@ -55,6 +56,8 @@ fun GameOverDialog(
     highestTile: Int,
     energyCollected: Int,
     gameMode: GameModeType = GameModeType.ENDLESS,
+    canUndo: Boolean = false,
+    onUndo: (() -> Unit)? = null,
     onRestart: () -> Unit,
     onNextLevel: (() -> Unit)? = null,
     onBackToMenu: () -> Unit,
@@ -173,6 +176,24 @@ fun GameOverDialog(
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
+
+                // Undo Option if defeat & energy allows
+                if (!isVictory && canUndo && onUndo != null) {
+                    Button(
+                        onClick = onUndo,
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00E5FF)),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(44.dp)
+                            .testTag("undo_gameover_btn")
+                    ) {
+                        Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = "Undo", tint = Color.Black, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Undo Last Move (-15⚡)", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    }
+                    Spacer(modifier = Modifier.height(10.dp))
+                }
 
                 // Action Buttons
                 Row(
