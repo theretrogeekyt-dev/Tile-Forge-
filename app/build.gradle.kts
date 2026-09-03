@@ -17,8 +17,8 @@ android {
     applicationId = "com.aistudio.tileforge.xqpkm"
     minSdk = 24
     targetSdk = 36
-    versionCode = 10032
-    versionName = "10032.0"
+    versionCode = 10033
+    versionName = "10033.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
