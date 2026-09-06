@@ -1,14 +1,3 @@
-<title align="center">
-    Title Forge
-</title>
-
-<p align="center">
-  <strong>Slide • Merge • Gather Energy • Forge Relics</strong><br>
-  <em>A modern, fantasy-infused puzzle strategy game built with Jetpack Compose & Kotlin</em>
-</p>
-
----
-
 ## 🌟 Overview
 
 **Tile Forge** takes classic sliding-tile puzzle mechanics and elevates them with strategic RPG elements: harness arcane energy, trigger powerful forging abilities, survive obstacle-laden boards, and craft legendary artifacts. 
