@@ -1,6 +1,6 @@
-<p align="center">
+<title align="center">
     Title Forge
-</p>
+</title>
 
 <p align="center">
   <strong>Slide • Merge • Gather Energy • Forge Relics</strong><br>
