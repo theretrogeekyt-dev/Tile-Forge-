@@ -60,6 +60,7 @@ import kotlinx.coroutines.delay
 fun GameScreen(
     viewModel: GameViewModel,
     onNavigateBack: () -> Unit,
+    onOpenTutorial: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -148,7 +149,8 @@ fun GameScreen(
                             onOpenAchievements = { viewModel.showAchievements(true) },
                             onOpenLevels = { viewModel.showLevelSelector(true) },
                             onOpenBackup = { viewModel.showLocalBackup(true) },
-                            onOpenCredits = { viewModel.showCredits(true) }
+                            onOpenCredits = { viewModel.showCredits(true) },
+                            onOpenTutorial = onOpenTutorial
                         )
 
                         if (uiState.gameMode == GameModeType.CHALLENGE) {
@@ -237,7 +239,8 @@ fun GameScreen(
                         onOpenAchievements = { viewModel.showAchievements(true) },
                         onOpenLevels = { viewModel.showLevelSelector(true) },
                         onOpenBackup = { viewModel.showLocalBackup(true) },
-                        onOpenCredits = { viewModel.showCredits(true) }
+                        onOpenCredits = { viewModel.showCredits(true) },
+                        onOpenTutorial = onOpenTutorial
                     )
 
                     // Objective Card (if Challenge Mode)
@@ -324,7 +327,8 @@ fun GameScreen(
         // Modal Dialogs
         if (uiState.showCreditsDialog) {
             CreditsDialog(
-                onDismiss = { viewModel.showCredits(false) }
+                onDismiss = { viewModel.showCredits(false) },
+                onOpenTutorial = onOpenTutorial
             )
         }
 

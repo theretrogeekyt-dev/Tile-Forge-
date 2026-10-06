@@ -46,4 +46,60 @@ class ExampleRobolectricTest {
     assertTrue(randomQuote.speaker.isNotBlank())
     assertTrue(randomQuote.source.isNotBlank())
   }
+
+  @Test
+  fun `tutorial custom grid and slide movement works`() {
+    val board = GameBoard().apply { preventRandomSpawns = true }
+    board.setupCustomGrid(
+      listOf(com.example.game.Tile(value = 2, row = 1, col = 0))
+    )
+    val result = board.slide(SwipeDirection.RIGHT)
+    assertTrue(result.moved)
+    assertEquals(2, board.grid[1][3]?.value)
+  }
+
+  @Test
+  fun `tutorial combine numbers doubles value`() {
+    val board = GameBoard().apply { preventRandomSpawns = true }
+    board.setupCustomGrid(
+      listOf(
+        com.example.game.Tile(value = 2, row = 1, col = 0),
+        com.example.game.Tile(value = 2, row = 1, col = 2)
+      )
+    )
+    val result = board.slide(SwipeDirection.RIGHT)
+    assertTrue(result.moved)
+    assertEquals(1, result.mergesCount)
+    assertEquals(4, board.grid[1][3]?.value)
+  }
+
+  @Test
+  fun `tutorial energy crystal merge grants energy`() {
+    val board = GameBoard().apply { preventRandomSpawns = true }
+    board.setupCustomGrid(
+      listOf(
+        com.example.game.Tile(type = com.example.game.TileType.ENERGY_CRYSTAL, energyBonus = 25, row = 2, col = 1),
+        com.example.game.Tile(type = com.example.game.TileType.ENERGY_CRYSTAL, energyBonus = 25, row = 2, col = 3)
+      )
+    )
+    val result = board.slide(SwipeDirection.RIGHT)
+    assertTrue(result.moved)
+    assertTrue(result.energyGained >= 50)
+    assertTrue(board.energy >= 50)
+  }
+
+  @Test
+  fun `tutorial forge anvil creates artifact`() {
+    val board = GameBoard().apply { preventRandomSpawns = true }
+    board.setupCustomGrid(
+      listOf(
+        com.example.game.Tile(type = com.example.game.TileType.FORGE_ANVIL, row = 1, col = 1),
+        com.example.game.Tile(value = 8, row = 1, col = 3)
+      )
+    )
+    val result = board.slide(SwipeDirection.RIGHT)
+    assertTrue(result.moved)
+    assertTrue(result.artifactForged != null)
+    assertEquals(com.example.game.TileType.ARTIFACT, board.grid[1][3]?.type)
+  }
 }

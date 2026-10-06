@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.FullscreenExit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.VolumeOff
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Icon
@@ -72,6 +73,7 @@ fun HeaderBar(
     onOpenLevels: () -> Unit,
     onOpenBackup: () -> Unit,
     onOpenCredits: () -> Unit,
+    onOpenTutorial: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val healthFraction = (hearts.toFloat() / maxHearts.toFloat()).coerceIn(0f, 1f)
@@ -223,6 +225,17 @@ fun HeaderBar(
                     iconSize = actionIconSize,
                     onClick = onOpenCredits
                 )
+                if (onOpenTutorial != null) {
+                    QuickActionButton(
+                        icon = Icons.Filled.School,
+                        description = "Tutorial",
+                        tag = "header_tutorial_btn",
+                        tint = Color(0xFFFFD700),
+                        btnSize = actionBtnSize,
+                        iconSize = actionIconSize,
+                        onClick = onOpenTutorial
+                    )
+                }
             }
         }
 

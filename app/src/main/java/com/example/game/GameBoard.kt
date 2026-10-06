@@ -43,6 +43,7 @@ class GameBoard {
 
     var hasAegisShield: Boolean = false
     var midasTurnsLeft: Int = 0
+    var preventRandomSpawns: Boolean = false
     var lastSlideDirection: SwipeDirection? = null
         private set
     var lastSlideTimestamp: Long = 0L
@@ -50,6 +51,44 @@ class GameBoard {
 
     private var rng: Random = Random.Default
     private val undoHistory = mutableListOf<BoardSnapshot>()
+
+    fun setupCustomGrid(tiles: List<Tile>, startingEnergy: Int = 0) {
+        grid = Array(size) { arrayOfNulls<Tile>(size) }
+        score = 0
+        energy = startingEnergy
+        moves = 0
+        comboCount = 0
+        artifactsForgedCount = 0
+        energyCollectedCount = 0
+        highestTileValue = 2
+        isGameOver = false
+        hasAegisShield = false
+        midasTurnsLeft = 0
+        hearts = maxHearts
+        undoHistory.clear()
+
+        for (tile in tiles) {
+            if (tile.row in 0 until size && tile.col in 0 until size) {
+                grid[tile.row][tile.col] = tile
+                if (tile.value > highestTileValue) {
+                    highestTileValue = tile.value
+                }
+            }
+        }
+    }
+
+    fun setTileAt(row: Int, col: Int, tile: Tile?) {
+        if (row in 0 until size && col in 0 until size) {
+            grid[row][col] = tile
+            if (tile != null && tile.value > highestTileValue) {
+                highestTileValue = tile.value
+            }
+        }
+    }
+
+    fun addEnergy(amount: Int) {
+        energy = maxOf(0, energy + amount)
+    }
 
     fun resetBoard(initialObstacles: Int = 0, seed: Long? = null, isDailyQuest: Boolean = false) {
         grid = Array(size) { arrayOfNulls<Tile>(size) }
@@ -264,7 +303,9 @@ class GameBoard {
             }
 
             // Spawn new tile after move
-            spawnRandomTile()
+            if (!preventRandomSpawns) {
+                spawnRandomTile()
+            }
 
             // Check game over or heart salvage
             val checkResult = checkGameOverOrRescue()

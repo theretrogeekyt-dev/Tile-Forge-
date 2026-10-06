@@ -26,6 +26,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.game.GameModeType
 import com.example.ui.screens.GameScreen
 import com.example.ui.screens.MainMenuScreen
+import com.example.ui.screens.TutorialScreen
 import com.example.ui.theme.MyApplicationTheme
 import com.example.ui.viewmodel.GameViewModel
 
@@ -102,6 +103,7 @@ fun TileForgeApp(activity: ComponentActivity) {
                 MainMenuScreen(
                     viewModel = gameViewModel,
                     onStartGame = { currentScreen = "game" },
+                    onStartTutorial = { currentScreen = "tutorial" },
                     modifier = Modifier.fillMaxSize()
                 )
             }
@@ -111,6 +113,18 @@ fun TileForgeApp(activity: ComponentActivity) {
                     onNavigateBack = {
                         gameViewModel.dismissAllDialogs()
                         currentScreen = "main_menu"
+                    },
+                    onOpenTutorial = { currentScreen = "tutorial" },
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+            "tutorial" -> {
+                TutorialScreen(
+                    viewModel = gameViewModel,
+                    onNavigateBack = { currentScreen = "main_menu" },
+                    onFinishTutorial = {
+                        gameViewModel.startNewGame(GameModeType.ENDLESS)
+                        currentScreen = "game"
                     },
                     modifier = Modifier.fillMaxSize()
                 )

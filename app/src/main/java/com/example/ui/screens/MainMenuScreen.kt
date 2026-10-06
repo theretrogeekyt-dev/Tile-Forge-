@@ -50,6 +50,7 @@ import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.MusicOff
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.FormatQuote
 import androidx.compose.material.icons.filled.Refresh
@@ -96,6 +97,7 @@ import com.example.ui.viewmodel.GameViewModel
 fun MainMenuScreen(
     viewModel: GameViewModel,
     onStartGame: () -> Unit,
+    onStartTutorial: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -242,7 +244,8 @@ fun MainMenuScreen(
                             viewModel.startNewGame(GameModeType.ENDLESS)
                             onStartGame()
                         },
-                        onOpenLevels = { viewModel.showLevelSelector(true) }
+                        onOpenLevels = { viewModel.showLevelSelector(true) },
+                        onStartTutorial = onStartTutorial
                     )
 
                     MainMenuUtilityGrid(
@@ -349,7 +352,8 @@ fun MainMenuScreen(
                             viewModel.startNewGame(GameModeType.ENDLESS)
                             onStartGame()
                         },
-                        onOpenLevels = { viewModel.showLevelSelector(true) }
+                        onOpenLevels = { viewModel.showLevelSelector(true) },
+                        onStartTutorial = onStartTutorial
                     )
 
                     // Secondary Tools & Customization Grid
@@ -368,7 +372,10 @@ fun MainMenuScreen(
 
         // Modals & Dialogs
         if (uiState.showCreditsDialog) {
-            CreditsDialog(onDismiss = { viewModel.showCredits(false) })
+            CreditsDialog(
+                onDismiss = { viewModel.showCredits(false) },
+                onOpenTutorial = onStartTutorial
+            )
         }
 
         if (uiState.showAchievementsDialog) {
@@ -558,7 +565,8 @@ private fun MainMenuPlayModes(
     compact: Boolean = false,
     onStartDailyQuest: () -> Unit,
     onStartEndless: () -> Unit,
-    onOpenLevels: () -> Unit
+    onOpenLevels: () -> Unit,
+    onStartTutorial: () -> Unit = {}
 ) {
     val cardPaddingV = if (compact) 8.dp else 12.dp
     val cardPaddingH = if (compact) 12.dp else 16.dp
@@ -828,6 +836,104 @@ private fun MainMenuPlayModes(
                         imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                         contentDescription = "Open Levels",
                         tint = Color(0xFFB388FF),
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
+        }
+
+        // Interactive Tutorial Card (Highlighted Academy theme)
+        Card(
+            onClick = onStartTutorial,
+            shape = RoundedCornerShape(14.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1730)),
+            elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(
+                    width = 1.3.dp,
+                    brush = Brush.horizontalGradient(
+                        listOf(
+                            Color(0xFFFFD700),
+                            Color(0xFF00E5FF)
+                        )
+                    ),
+                    shape = RoundedCornerShape(14.dp)
+                )
+                .testTag("start_tutorial_btn")
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(
+                                Color(0xFFFFD700).copy(alpha = 0.18f),
+                                Color(0xFF1E1730).copy(alpha = 0.90f)
+                            )
+                        )
+                    )
+                    .padding(horizontal = cardPaddingH, vertical = cardPaddingV)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = Color(0xFFFFD700),
+                            modifier = Modifier.size(iconBoxSize)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.Filled.School,
+                                    contentDescription = null,
+                                    tint = Color(0xFF140D1F),
+                                    modifier = Modifier.size(iconSize)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "Interactive Tutorial",
+                                    fontSize = titleSize,
+                                    fontWeight = FontWeight.Black,
+                                    color = Color.White
+                                )
+                                Spacer(modifier = Modifier.width(5.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .background(Color(0xFF00E5FF).copy(alpha = 0.25f))
+                                        .padding(horizontal = 4.dp, vertical = 1.dp)
+                                ) {
+                                    Text(
+                                        text = "LEARN",
+                                        fontSize = 7.5.sp,
+                                        fontWeight = FontWeight.Black,
+                                        color = Color(0xFF00E5FF)
+                                    )
+                                }
+                            }
+                            Text(
+                                text = "Slide, merge numbers & forge relics",
+                                fontSize = subtitleSize,
+                                color = Color.White.copy(alpha = 0.75f)
+                            )
+                        }
+                    }
+
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = "Start Tutorial",
+                        tint = Color(0xFFFFD700),
                         modifier = Modifier.size(18.dp)
                     )
                 }

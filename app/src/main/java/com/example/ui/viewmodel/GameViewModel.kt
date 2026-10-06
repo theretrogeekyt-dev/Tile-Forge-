@@ -426,6 +426,19 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         )
     }
 
+    fun completeTutorial() {
+        viewModelScope.launch {
+            val stats = repository.getGameStatsDirect() ?: GameStatsEntity()
+            repository.saveGameStats(
+                stats.copy(
+                    totalEnergyCollected = stats.totalEnergyCollected + 50,
+                    highestTile = maxOf(stats.highestTile, 8)
+                )
+            )
+            repository.updateAchievementProgress("ach_first_forge", 1)
+        }
+    }
+
     fun showCredits(show: Boolean) {
         if (show) dismissAllDialogs()
         _uiState.value = _uiState.value.copy(showCreditsDialog = show)

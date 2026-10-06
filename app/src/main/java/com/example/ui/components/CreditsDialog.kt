@@ -36,10 +36,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+import androidx.compose.material.icons.filled.School
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreditsDialog(
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onOpenTutorial: (() -> Unit)? = null
 ) {
     BasicAlertDialog(
         onDismissRequest = onDismiss
@@ -106,6 +111,35 @@ fun CreditsDialog(
                         CreditItem(label = "Created by", value = "Joshua Michael & Michael Barkley")
                         CreditItem(label = "Game Architecture", value = "Antigravity & AI Studio")
                         CreditItem(label = "Theme Art & Sound Engine", value = "Antigravity Dynamic Audio")
+                    }
+                }
+
+                if (onOpenTutorial != null) {
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Button(
+                        onClick = {
+                            onDismiss()
+                            onOpenTutorial()
+                        },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7C4DFF)),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("credits_launch_tutorial_btn")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.School,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.size(6.dp))
+                        Text(
+                            text = "LAUNCH INTERACTIVE TUTORIAL",
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.Black,
+                            color = Color.White
+                        )
                     }
                 }
 
