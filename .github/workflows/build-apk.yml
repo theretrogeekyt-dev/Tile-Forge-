@@ -1,0 +1,255 @@
+name: Build & Release Distributable APK
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+    inputs:
+      create_release:
+        description: 'Publish a GitHub Release with APK asset'
+        required: true
+        type: boolean
+        default: true
+      custom_notes:
+        description: 'Optional custom release notes to prepend to changelog'
+        required: false
+        type: string
+        default: ''
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  build-apk:
+    name: Build Distributable APK & Generate Changelog
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract Version Info & Build Metadata
+        id: version_info
+        run: |
+          VERSION_NAME=$(grep -E 'versionName\s*=\s*' app/build.gradle.kts | head -n 1 | sed -E 's/.*"([^"]+)".*/\1/')
+          VERSION_CODE=$(grep -E 'versionCode\s*=\s*' app/build.gradle.kts | head -n 1 | sed -E 's/.*versionCode\s*=\s*([0-9]+).*/\1/')
+          PACKAGE_ID=$(grep -E 'applicationId\s*=\s*' app/build.gradle.kts | head -n 1 | sed -E 's/.*"([^"]+)".*/\1/')
+          
+          if [ -z "$VERSION_NAME" ]; then VERSION_NAME="1.0.0"; fi
+          if [ -z "$VERSION_CODE" ]; then VERSION_CODE="1"; fi
+          
+          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
+          echo "VERSION_CODE=$VERSION_CODE" >> $GITHUB_ENV
+          echo "PACKAGE_ID=$PACKAGE_ID" >> $GITHUB_ENV
+          echo "TAG_NAME=v$VERSION_NAME" >> $GITHUB_ENV
+          
+          echo "version_name=$VERSION_NAME" >> $GITHUB_OUTPUT
+          echo "version_code=$VERSION_CODE" >> $GITHUB_OUTPUT
+          echo "package_id=$PACKAGE_ID" >> $GITHUB_OUTPUT
+          echo "tag_name=v$VERSION_NAME" >> $GITHUB_OUTPUT
+          
+          echo "═════════════════════════════════════════════"
+          echo " Tile Forge Build Target"
+          echo " Version Name: $VERSION_NAME"
+          echo " Version Code: $VERSION_CODE"
+          echo " Package ID:   $PACKAGE_ID"
+          echo " Target Tag:   v$VERSION_NAME"
+          echo "═════════════════════════════════════════════"
+
+      - name: Setup Java (Temurin JDK 17)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+
+      - name: Prepare Signing Keystore
+        id: setup_keystore
+        run: |
+          if [ -n "${{ secrets.KEYSTORE_BASE64 }}" ]; then
+            echo "Using custom production keystore from repository secrets."
+            echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > "${{ github.workspace }}/my-upload-key.jks"
+            echo "KEYSTORE_PATH=${{ github.workspace }}/my-upload-key.jks" >> $GITHUB_ENV
+            echo "STORE_PASSWORD=${{ secrets.STORE_PASSWORD }}" >> $GITHUB_ENV
+            echo "KEY_ALIAS=${{ secrets.KEY_ALIAS || 'upload' }}" >> $GITHUB_ENV
+            echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> $GITHUB_ENV
+          elif [ -f "debug.keystore.base64" ]; then
+            echo "Restoring signing keystore from debug.keystore.base64..."
+            base64 -d debug.keystore.base64 > debug.keystore
+            echo "STORE_PASSWORD=android" >> $GITHUB_ENV
+            echo "KEY_ALIAS=androiddebugkey" >> $GITHUB_ENV
+            echo "KEY_PASSWORD=android" >> $GITHUB_ENV
+          elif [ -f "debug.keystore" ]; then
+            echo "Using existing debug.keystore."
+            echo "STORE_PASSWORD=android" >> $GITHUB_ENV
+            echo "KEY_ALIAS=androiddebugkey" >> $GITHUB_ENV
+            echo "KEY_PASSWORD=android" >> $GITHUB_ENV
+          else
+            echo "Generating new signing keystore..."
+            keytool -genkeypair -v -keystore debug.keystore -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=TileForge, OU=Android, O=GameStudio, L=City, S=State, C=US"
+            echo "STORE_PASSWORD=android" >> $GITHUB_ENV
+            echo "KEY_ALIAS=androiddebugkey" >> $GITHUB_ENV
+            echo "KEY_PASSWORD=android" >> $GITHUB_ENV
+          fi
+
+      - name: Build Distributable APK via Gradle
+        run: |
+          echo "Building Release and Debug APKs..."
+          if [ -f "./gradlew" ]; then
+            chmod +x ./gradlew
+            ./gradlew :app:assembleRelease :app:assembleDebug --stacktrace
+          else
+            gradle :app:assembleRelease :app:assembleDebug --stacktrace
+          fi
+
+      - name: Package & Sign Verify APK
+        id: stage_apk
+        run: |
+          mkdir -p release-artifacts
+          
+          # Find the built release APK (or debug APK if release wasn't generated)
+          APK_FILE=$(find app/build/outputs/apk/release -name "*.apk" 2>/dev/null | head -n 1)
+          if [ -z "$APK_FILE" ]; then
+            echo "No release APK found in release folder, falling back to debug APK..."
+            APK_FILE=$(find app/build/outputs/apk/debug -name "*.apk" 2>/dev/null | head -n 1)
+          fi
+          
+          if [ -z "$APK_FILE" ] || [ ! -f "$APK_FILE" ]; then
+            echo "ERROR: Failed to find built APK file!"
+            exit 1
+          fi
+          
+          TARGET_APK="release-artifacts/TileForge-v${VERSION_NAME}-build${VERSION_CODE}.apk"
+          LATEST_APK="release-artifacts/TileForge-latest.apk"
+          
+          cp "$APK_FILE" "$TARGET_APK"
+          cp "$APK_FILE" "$LATEST_APK"
+          
+          # Generate SHA256 Checksums
+          cd release-artifacts
+          sha256sum "TileForge-v${VERSION_NAME}-build${VERSION_CODE}.apk" > "TileForge-v${VERSION_NAME}-build${VERSION_CODE}.apk.sha256"
+          sha256sum "TileForge-latest.apk" > "TileForge-latest.apk.sha256"
+          cd ..
+          
+          APK_SIZE_BYTES=$(stat -c%s "$TARGET_APK")
+          APK_SIZE_MB=$(awk "BEGIN {printf \"%.2f\", $APK_SIZE_BYTES/1048576}")
+          SHA256_HASH=$(sha256sum "$TARGET_APK" | awk '{print $1}')
+          
+          echo "APK_PATH=$TARGET_APK" >> $GITHUB_ENV
+          echo "APK_SIZE_MB=$APK_SIZE_MB" >> $GITHUB_ENV
+          echo "SHA256_HASH=$SHA256_HASH" >> $GITHUB_ENV
+          
+          echo "apk_path=$TARGET_APK" >> $GITHUB_OUTPUT
+          echo "apk_size=$APK_SIZE_MB MB" >> $GITHUB_OUTPUT
+          echo "sha256=$SHA256_HASH" >> $GITHUB_OUTPUT
+          
+          echo "═════════════════════════════════════════════"
+          echo " Artifact Ready For Distribution"
+          echo " File:      $TARGET_APK"
+          echo " Size:      $APK_SIZE_MB MB ($APK_SIZE_BYTES bytes)"
+          echo " SHA256:    $SHA256_HASH"
+          echo "═════════════════════════════════════════════"
+
+      - name: Generate Changelog & Release Notes
+        id: generate_changelog
+        run: |
+          DATE_STR=$(date -u +"%Y-%m-%d %H:%M UTC")
+          
+          # Find previous tag if any
+          PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          
+          cat << 'EOF' > CHANGELOG_RELEASE.md
+          # ⚒️ Tile Forge Release Notes
+          EOF
+          
+          echo "" >> CHANGELOG_RELEASE.md
+          echo "### 📦 Build & Release Details" >> CHANGELOG_RELEASE.md
+          echo "- **App Version**: \`v${VERSION_NAME}\` (Version Code: \`${VERSION_CODE}\`)" >> CHANGELOG_RELEASE.md
+          echo "- **Package ID**: \`${PACKAGE_ID}\`" >> CHANGELOG_RELEASE.md
+          echo "- **Build Timestamp**: \`${DATE_STR}\`" >> CHANGELOG_RELEASE.md
+          echo "- **APK File**: \`TileForge-v${VERSION_NAME}-build${VERSION_CODE}.apk\` (\`${APK_SIZE_MB} MB\`)" >> CHANGELOG_RELEASE.md
+          echo "- **SHA-256 Checksum**: \`${SHA256_HASH}\`" >> CHANGELOG_RELEASE.md
+          echo "" >> CHANGELOG_RELEASE.md
+          
+          if [ -n "${{ github.event.inputs.custom_notes }}" ]; then
+            echo "### 📢 Announcement" >> CHANGELOG_RELEASE.md
+            echo "${{ github.event.inputs.custom_notes }}" >> CHANGELOG_RELEASE.md
+            echo "" >> CHANGELOG_RELEASE.md
+          fi
+          
+          echo "### 🚀 What's New & Changes" >> CHANGELOG_RELEASE.md
+          
+          if [ -n "$PREV_TAG" ]; then
+            echo "Changes since **$PREV_TAG**:" >> CHANGELOG_RELEASE.md
+            echo "" >> CHANGELOG_RELEASE.md
+            git log "${PREV_TAG}..HEAD" --pretty=format:"* %s ([%h](https://github.com/${{ github.repository }}/commit/%H))" >> CHANGELOG_RELEASE.md
+          else
+            echo "Recent commit history:" >> CHANGELOG_RELEASE.md
+            echo "" >> CHANGELOG_RELEASE.md
+            git log -n 20 --pretty=format:"* %s ([%h](https://github.com/${{ github.repository }}/commit/%H))" 2>/dev/null || echo "* Automated release build for v${VERSION_NAME}" >> CHANGELOG_RELEASE.md
+          fi
+          
+          echo "" >> CHANGELOG_RELEASE.md
+          echo "" >> CHANGELOG_RELEASE.md
+          cat << 'EOF' >> CHANGELOG_RELEASE.md
+          ### 🎮 Core Highlights
+          * **Responsive Scaling**: Optimized to fit 100% on all Samsung phones (Galaxy S/Z/A/Note) and Galaxy Tab / Foldable tablets with two-pane support.
+          * **Plus Ultra & MHA Themes**: Iconic My Hero Academia quotes, hero mastery ranks, and U.A. High One For All theme.
+          * **Arcane Forging**: Gather energy crystals, cast Shatter, Duplicate, Transmute, and Ignis Burn abilities with 3 rescue hearts.
+          * **Modes**: Endless Forge, Seeded Daily Crucible, and Hand-crafted Challenge Levels.
+          
+          ### 📲 Installation Instructions
+          1. Download **`TileForge-v${VERSION_NAME}-build${VERSION_CODE}.apk`** below.
+          2. Open the downloaded `.apk` file on your Android device (Android 7.0+ / API 24+).
+          3. Tap **Install** (allow installation from your browser/files app if prompted).
+          4. Enjoy playing Tile Forge!
+          EOF
+          
+          echo "Changelog generated successfully:"
+          cat CHANGELOG_RELEASE.md
+
+      - name: Upload APK & Checksums to Workflow Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: TileForge-v${{ env.VERSION_NAME }}-APK
+          path: |
+            release-artifacts/*.apk
+            release-artifacts/*.sha256
+            CHANGELOG_RELEASE.md
+          retention-days: 30
+
+      - name: Publish GitHub Release
+        if: ${{ (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v'))) || (github.event_name == 'workflow_dispatch' && github.event.inputs.create_release == 'true') }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ env.VERSION_NAME }}
+          name: Tile Forge v${{ env.VERSION_NAME }} (Build ${{ env.VERSION_CODE }})
+          body_path: CHANGELOG_RELEASE.md
+          draft: false
+          prerelease: false
+          files: |
+            release-artifacts/TileForge-v${{ env.VERSION_NAME }}-build${{ env.VERSION_CODE }}.apk
+            release-artifacts/TileForge-v${{ env.VERSION_NAME }}-build${{ env.VERSION_CODE }}.apk.sha256
+            release-artifacts/TileForge-latest.apk
+            release-artifacts/TileForge-latest.apk.sha256
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
