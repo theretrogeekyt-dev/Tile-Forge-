@@ -41,6 +41,13 @@ class GameBoard {
         private set
     val maxHearts: Int = 3
 
+    var totalMergesSession: Int = 0
+        private set
+    var highestSingleMoveScore: Int = 0
+        private set
+    var totalScoreFromCombos: Int = 0
+        private set
+
     var hasAegisShield: Boolean = false
     var midasTurnsLeft: Int = 0
     var preventRandomSpawns: Boolean = false
@@ -58,6 +65,9 @@ class GameBoard {
         energy = startingEnergy
         moves = 0
         comboCount = 0
+        totalMergesSession = 0
+        highestSingleMoveScore = 0
+        totalScoreFromCombos = 0
         artifactsForgedCount = 0
         energyCollectedCount = 0
         highestTileValue = 2
@@ -96,6 +106,9 @@ class GameBoard {
         energy = 0
         moves = 0
         comboCount = 0
+        totalMergesSession = 0
+        highestSingleMoveScore = 0
+        totalScoreFromCombos = 0
         artifactsForgedCount = 0
         energyCollectedCount = 0
         highestTileValue = 2
@@ -269,6 +282,7 @@ class GameBoard {
 
         var heartLost = false
         var wasRescued = false
+        var finalScoreGained = 0
 
         if (moved) {
             moves++
@@ -277,15 +291,22 @@ class GameBoard {
             lastSlideTimestamp = System.currentTimeMillis()
 
             // Apply Midas Ring Multiplier if active
-            var finalScoreGained = totalScoreGained
+            finalScoreGained = totalScoreGained
             if (midasTurnsLeft > 0) {
                 finalScoreGained *= 2
                 midasTurnsLeft--
             }
 
             // Combo multiplier bonus
+            val comboBonus = if (comboCount > 1) (finalScoreGained * (comboCount * 0.25)).toInt() else 0
             if (comboCount > 1) {
-                finalScoreGained = (finalScoreGained * (1.0 + comboCount * 0.25)).toInt()
+                finalScoreGained += comboBonus
+                totalScoreFromCombos += comboBonus
+            }
+
+            totalMergesSession += totalMerges
+            if (finalScoreGained > highestSingleMoveScore) {
+                highestSingleMoveScore = finalScoreGained
             }
 
             score += finalScoreGained
@@ -315,13 +336,14 @@ class GameBoard {
 
         return SlideResult(
             moved = moved,
-            scoreGained = totalScoreGained,
+            scoreGained = if (moved) finalScoreGained else 0,
             energyGained = totalEnergyGained,
             mergesCount = totalMerges,
             artifactForged = forgedArtifact,
             heartLost = heartLost,
             heartsRemaining = hearts,
-            wasRescued = wasRescued
+            wasRescued = wasRescued,
+            comboCount = comboCount
         )
     }
 
@@ -706,7 +728,8 @@ data class SlideResult(
     val artifactForged: ArtifactType?,
     val heartLost: Boolean = false,
     val heartsRemaining: Int = 3,
-    val wasRescued: Boolean = false
+    val wasRescued: Boolean = false,
+    val comboCount: Int = 1
 )
 
 data class MergeOutcome(

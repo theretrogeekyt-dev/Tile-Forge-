@@ -56,6 +56,7 @@ data class GameUiState(
     val showAchievementsDialog: Boolean = false,
     val showThemeDialog: Boolean = false,
     val showLevelSelectDialog: Boolean = false,
+    val showScoreTrackerDialog: Boolean = false,
     val hasAegisShield: Boolean = false,
     val midasTurnsLeft: Int = 0,
     val notificationMessage: String? = null,
@@ -67,7 +68,15 @@ data class GameUiState(
     val dailyQuestHighScore: Int = 0,
     val todayDateKey: String = "",
     val lastSlideDirection: SwipeDirection? = null,
-    val lastSlideTimestamp: Long = 0L
+    val lastSlideTimestamp: Long = 0L,
+    val lastScoreGained: Int = 0,
+    val lastScoreGainTimestamp: Long = 0L,
+    val comboStreak: Int = 1,
+    val maxComboInSession: Int = 1,
+    val totalMergesInSession: Int = 0,
+    val highestSingleMoveScore: Int = 0,
+    val totalScoreFromCombos: Int = 0,
+    val isNewHighScoreAchieved: Boolean = false
 )
 
 class GameViewModel(application: Application) : AndroidViewModel(application) {
@@ -173,9 +182,18 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             showAchievementsDialog = false,
             showThemeDialog = false,
             showLevelSelectDialog = false,
+            showScoreTrackerDialog = false,
             showBackupDialog = false,
             lastSlideDirection = null,
             lastSlideTimestamp = 0L,
+            lastScoreGained = 0,
+            lastScoreGainTimestamp = 0L,
+            comboStreak = 1,
+            maxComboInSession = 1,
+            totalMergesInSession = 0,
+            highestSingleMoveScore = 0,
+            totalScoreFromCombos = 0,
+            isNewHighScoreAchieved = false,
             dailyQuestDateFormatted = readableDate,
             todayDateKey = dateKey,
             dailyQuestHighScore = gameStats.value?.dailyQuestHighScore ?: 0,
@@ -224,6 +242,20 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     showNotification("💀 All Hearts Depleted! Game Over.")
                 }
             }
+
+            val currentHighScore = gameStats.value?.highScore ?: 0
+            val isNowNewHigh = currentHighScore > 0 && gameBoard.score > currentHighScore
+
+            _uiState.value = _uiState.value.copy(
+                lastScoreGained = result.scoreGained,
+                lastScoreGainTimestamp = System.currentTimeMillis(),
+                comboStreak = result.comboCount,
+                maxComboInSession = maxOf(_uiState.value.maxComboInSession, result.comboCount),
+                totalMergesInSession = gameBoard.totalMergesSession,
+                highestSingleMoveScore = gameBoard.highestSingleMoveScore,
+                totalScoreFromCombos = gameBoard.totalScoreFromCombos,
+                isNewHighScoreAchieved = isNowNewHigh || _uiState.value.isNewHighScoreAchieved
+            )
 
             checkLevelProgressAndWinCondition()
             updateStateFromBoard()
@@ -422,8 +454,13 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             showAchievementsDialog = false,
             showThemeDialog = false,
             showLevelSelectDialog = false,
-            showBackupDialog = false
+            showBackupDialog = false,
+            showScoreTrackerDialog = false
         )
+    }
+
+    fun showScoreTracker(show: Boolean) {
+        _uiState.value = _uiState.value.copy(showScoreTrackerDialog = show)
     }
 
     fun completeTutorial() {

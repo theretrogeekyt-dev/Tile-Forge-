@@ -43,6 +43,10 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateIntAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.game.FantasyQuotes
@@ -64,6 +68,12 @@ fun GameOverDialog(
     onDismiss: () -> Unit
 ) {
     val quote = remember { FantasyQuotes.getRandomQuote() }
+    val animatedScore by animateIntAsState(
+        targetValue = score,
+        animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing),
+        label = "gameOverScore"
+    )
+    val rank = getMasteryRank(score)
 
     BasicAlertDialog(
         onDismissRequest = onDismiss
@@ -138,7 +148,8 @@ fun GameOverDialog(
                         .padding(14.dp)
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        StatRow("Total Score", score.toString(), Color(0xFFFFD54F))
+                        StatRow("Total Score", animatedScore.toString(), Color(0xFFFFD54F))
+                        StatRow("Forge Mastery", rank.title, rank.color)
                         StatRow("Highest Tile", highestTile.toString(), Color(0xFFFF8A65))
                         StatRow("Energy Harvested", "$energyCollected⚡", Color(0xFF00E5FF))
                     }

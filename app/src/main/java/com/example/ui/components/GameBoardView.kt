@@ -27,12 +27,17 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -41,7 +46,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -67,12 +74,56 @@ fun GameBoardView(
     onTileClick: (Int, Int) -> Unit,
     modifier: Modifier = Modifier,
     lastSlideDirection: SwipeDirection? = null,
-    lastSlideTimestamp: Long = 0L
+    lastSlideTimestamp: Long = 0L,
+    lastScoreGained: Int = 0,
+    lastScoreGainTimestamp: Long = 0L,
+    comboStreak: Int = 1
 ) {
     val nudgeOffsetX = remember { Animatable(0f) }
     val nudgeOffsetY = remember { Animatable(0f) }
     var activeDirectionVisual by remember { mutableStateOf<SwipeDirection?>(null) }
     var showDirectionIndicator by remember { mutableStateOf(false) }
+
+    // Board Floating Score Popups
+    val boardFloatY = remember { Animatable(0f) }
+    val boardFloatAlpha = remember { Animatable(0f) }
+    val boardFloatScale = remember { Animatable(0.6f) }
+    var boardScoreDelta by remember { mutableStateOf(0) }
+    var boardComboDelta by remember { mutableStateOf(1) }
+
+    LaunchedEffect(lastScoreGainTimestamp) {
+        if (lastScoreGainTimestamp > 0L && lastScoreGained > 0) {
+            boardScoreDelta = lastScoreGained
+            boardComboDelta = comboStreak
+            boardFloatY.snapTo(0f)
+            boardFloatAlpha.snapTo(1f)
+            boardFloatScale.snapTo(0.6f)
+            coroutineScope {
+                launch {
+                    boardFloatScale.animateTo(
+                        targetValue = 1.05f,
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessMediumLow
+                        )
+                    )
+                }
+                launch {
+                    boardFloatY.animateTo(
+                        targetValue = -42f,
+                        animationSpec = tween(durationMillis = 650, easing = FastOutSlowInEasing)
+                    )
+                }
+                launch {
+                    delay(320)
+                    boardFloatAlpha.animateTo(
+                        targetValue = 0f,
+                        animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing)
+                    )
+                }
+            }
+        }
+    }
 
     // Dynamic kinetic impulse & directional indicator on slide
     LaunchedEffect(lastSlideTimestamp) {
@@ -253,6 +304,46 @@ fun GameBoardView(
                         tint = Color.White,
                         modifier = Modifier.size(24.dp)
                     )
+                }
+            }
+
+            // Floating Score Feedback Popup over the Board
+            if (boardFloatAlpha.value > 0.01f && boardScoreDelta > 0) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .offset(y = boardFloatY.value.dp)
+                        .scale(boardFloatScale.value)
+                        .alpha(boardFloatAlpha.value)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(
+                                    Color(0xFFFFD700),
+                                    Color(0xFFFF9100)
+                                )
+                            )
+                        )
+                        .border(1.dp, Color.White.copy(alpha = 0.6f), RoundedCornerShape(14.dp))
+                        .padding(horizontal = 14.dp, vertical = 6.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "+$boardScoreDelta",
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.Black,
+                            color = Color.Black
+                        )
+                        if (boardComboDelta > 1) {
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "🔥 x$boardComboDelta",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Black,
+                                color = Color(0xFFB71C1C)
+                            )
+                        }
+                    }
                 }
             }
         }

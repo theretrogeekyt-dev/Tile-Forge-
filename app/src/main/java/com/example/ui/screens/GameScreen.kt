@@ -51,6 +51,7 @@ import com.example.ui.components.LevelSelectDialog
 import com.example.ui.components.LocalBackupDialog
 import com.example.ui.components.ObjectiveCard
 import com.example.ui.components.PowerUpActionBar
+import com.example.ui.components.ScoreTrackerDialog
 import com.example.ui.components.ThemeSelectorDialog
 import com.example.ui.viewmodel.GameViewModel
 import com.example.ui.viewmodel.PowerAbilityType
@@ -88,7 +89,7 @@ fun GameScreen(
     }
 
     BackHandler {
-        if (uiState.showCreditsDialog || uiState.showAchievementsDialog || uiState.showThemeDialog || uiState.showLevelSelectDialog || uiState.showBackupDialog) {
+        if (uiState.showCreditsDialog || uiState.showAchievementsDialog || uiState.showThemeDialog || uiState.showLevelSelectDialog || uiState.showBackupDialog || uiState.showScoreTrackerDialog) {
             viewModel.dismissAllDialogs()
         } else {
             onNavigateBack()
@@ -141,10 +142,14 @@ fun GameScreen(
                             musicEnabled = uiState.musicEnabled,
                             isImmersiveModeEnabled = uiState.isImmersiveModeEnabled,
                             compact = true,
+                            lastScoreGained = uiState.lastScoreGained,
+                            lastScoreGainTimestamp = uiState.lastScoreGainTimestamp,
+                            comboStreak = uiState.comboStreak,
                             onNavigateBack = onNavigateBack,
                             onToggleSound = { viewModel.toggleSoundFx() },
                             onToggleMusic = { viewModel.toggleMusic() },
                             onToggleImmersiveMode = { viewModel.toggleImmersiveMode() },
+                            onOpenScoreTracker = { viewModel.showScoreTracker(true) },
                             onOpenTheme = { viewModel.showThemeSelector(true) },
                             onOpenAchievements = { viewModel.showAchievements(true) },
                             onOpenLevels = { viewModel.showLevelSelector(true) },
@@ -195,6 +200,9 @@ fun GameScreen(
                         onTileClick = { r, c -> viewModel.handleTileClick(r, c) },
                         lastSlideDirection = uiState.lastSlideDirection,
                         lastSlideTimestamp = uiState.lastSlideTimestamp,
+                        lastScoreGained = uiState.lastScoreGained,
+                        lastScoreGainTimestamp = uiState.lastScoreGainTimestamp,
+                        comboStreak = uiState.comboStreak,
                         modifier = Modifier.fillMaxHeight(0.95f)
                     )
                 }
@@ -231,10 +239,14 @@ fun GameScreen(
                         soundFxEnabled = uiState.soundFxEnabled,
                         musicEnabled = uiState.musicEnabled,
                         isImmersiveModeEnabled = uiState.isImmersiveModeEnabled,
+                        lastScoreGained = uiState.lastScoreGained,
+                        lastScoreGainTimestamp = uiState.lastScoreGainTimestamp,
+                        comboStreak = uiState.comboStreak,
                         onNavigateBack = onNavigateBack,
                         onToggleSound = { viewModel.toggleSoundFx() },
                         onToggleMusic = { viewModel.toggleMusic() },
                         onToggleImmersiveMode = { viewModel.toggleImmersiveMode() },
+                        onOpenScoreTracker = { viewModel.showScoreTracker(true) },
                         onOpenTheme = { viewModel.showThemeSelector(true) },
                         onOpenAchievements = { viewModel.showAchievements(true) },
                         onOpenLevels = { viewModel.showLevelSelector(true) },
@@ -278,6 +290,9 @@ fun GameScreen(
                         onTileClick = { r, c -> viewModel.handleTileClick(r, c) },
                         lastSlideDirection = uiState.lastSlideDirection,
                         lastSlideTimestamp = uiState.lastSlideTimestamp,
+                        lastScoreGained = uiState.lastScoreGained,
+                        lastScoreGainTimestamp = uiState.lastScoreGainTimestamp,
+                        comboStreak = uiState.comboStreak,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -344,6 +359,24 @@ fun GameScreen(
                 activeTheme = uiState.activeTheme,
                 onSelectTheme = { theme -> viewModel.setTheme(theme) },
                 onDismiss = { viewModel.showThemeSelector(false) }
+            )
+        }
+
+        if (uiState.showScoreTrackerDialog) {
+            ScoreTrackerDialog(
+                score = uiState.score,
+                highScore = highScore,
+                gameMode = uiState.gameMode,
+                levelGoal = uiState.levelGoal,
+                moves = uiState.moves,
+                totalMerges = uiState.totalMergesInSession,
+                comboStreak = uiState.comboStreak,
+                maxCombo = uiState.maxComboInSession,
+                highestSingleMoveScore = uiState.highestSingleMoveScore,
+                totalScoreFromCombos = uiState.totalScoreFromCombos,
+                highestTile = uiState.highestTile,
+                theme = uiState.activeTheme,
+                onDismiss = { viewModel.showScoreTracker(false) }
             )
         }
 

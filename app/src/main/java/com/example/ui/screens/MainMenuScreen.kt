@@ -7,6 +7,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
@@ -524,6 +525,12 @@ private fun ForgeHeroEmblem(pulseGlow: Float, sizeDp: Int = 64) {
  */
 @Composable
 private fun HighScorePill(highScore: Int) {
+    val animatedHighScore by animateIntAsState(
+        targetValue = highScore,
+        animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing),
+        label = "mainMenuHighScore"
+    )
+
     Surface(
         shape = RoundedCornerShape(12.dp),
         color = Color(0xFF1B1426),
@@ -545,7 +552,7 @@ private fun HighScorePill(highScore: Int) {
             )
             Spacer(modifier = Modifier.width(5.dp))
             Text(
-                text = if (highScore > 0) "BEST SCORE: $highScore" else "BEST SCORE: 0",
+                text = if (highScore > 0) "BEST SCORE: $animatedHighScore" else "BEST SCORE: 0",
                 fontSize = 11.5.sp,
                 fontWeight = FontWeight.Bold,
                 color = if (highScore > 0) Color(0xFFFFE082) else Color.White.copy(alpha = 0.7f),

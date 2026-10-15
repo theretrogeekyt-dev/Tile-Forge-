@@ -3,5 +3,4 @@
     <include domain="database" path="."/>
     <include domain="sharedpref" path="."/>
     <include domain="file" path="tileforge_backup.zip"/>
-    <exclude domain="root" path="cache"/>
 </full-backup-content>

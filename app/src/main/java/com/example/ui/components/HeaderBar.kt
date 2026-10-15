@@ -43,13 +43,31 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.animateIntAsState
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.foundation.layout.offset
+import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.Timeline
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.alpha
 import com.example.game.GameModeType
 import com.example.ui.theme.ForgeThemeStyle
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun HeaderBar(
@@ -64,10 +82,14 @@ fun HeaderBar(
     musicEnabled: Boolean,
     isImmersiveModeEnabled: Boolean = true,
     compact: Boolean = false,
+    lastScoreGained: Int = 0,
+    lastScoreGainTimestamp: Long = 0L,
+    comboStreak: Int = 1,
     onNavigateBack: () -> Unit,
     onToggleSound: () -> Unit,
     onToggleMusic: () -> Unit,
     onToggleImmersiveMode: () -> Unit = {},
+    onOpenScoreTracker: (() -> Unit)? = null,
     onOpenTheme: () -> Unit,
     onOpenAchievements: () -> Unit,
     onOpenLevels: () -> Unit,
@@ -78,6 +100,59 @@ fun HeaderBar(
 ) {
     val healthFraction = (hearts.toFloat() / maxHearts.toFloat()).coerceIn(0f, 1f)
     val animatedHealth by animateFloatAsState(targetValue = healthFraction, animationSpec = tween(400), label = "healthProgress")
+
+    // Smooth rolling numerical counter for scores
+    val animatedScore by animateIntAsState(
+        targetValue = score,
+        animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing),
+        label = "scoreRoll"
+    )
+    val animatedHighScore by animateIntAsState(
+        targetValue = highScore,
+        animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing),
+        label = "highScoreRoll"
+    )
+
+    // Floating Score Delta Animation
+    val floatYAnim = remember { Animatable(0f) }
+    val floatAlphaAnim = remember { Animatable(0f) }
+    var displayedDelta by remember { mutableStateOf(0) }
+    var displayedCombo by remember { mutableStateOf(1) }
+
+    LaunchedEffect(lastScoreGainTimestamp) {
+        if (lastScoreGainTimestamp > 0L && lastScoreGained > 0) {
+            displayedDelta = lastScoreGained
+            displayedCombo = comboStreak
+            floatYAnim.snapTo(0f)
+            floatAlphaAnim.snapTo(1f)
+            coroutineScope {
+                launch {
+                    floatYAnim.animateTo(
+                        targetValue = -34f,
+                        animationSpec = tween(durationMillis = 750, easing = FastOutSlowInEasing)
+                    )
+                }
+                launch {
+                    delay(350)
+                    floatAlphaAnim.animateTo(
+                        targetValue = 0f,
+                        animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing)
+                    )
+                }
+            }
+        }
+    }
+
+    val infiniteTransition = rememberInfiniteTransition(label = "pulseTransition")
+    val recordGlow by infiniteTransition.animateFloat(
+        initialValue = 0.6f,
+        targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(900, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "recordGlow"
+    )
 
     val paddingV = if (compact) 3.dp else 6.dp
     val paddingH = if (compact) 10.dp else 14.dp
@@ -171,6 +246,17 @@ fun HeaderBar(
                     iconSize = actionIconSize,
                     onClick = onOpenLevels
                 )
+                if (onOpenScoreTracker != null) {
+                    QuickActionButton(
+                        icon = Icons.Filled.Timeline,
+                        description = "Score Tracker",
+                        tag = "score_tracker_btn",
+                        tint = Color(0xFF00E5FF),
+                        btnSize = actionBtnSize,
+                        iconSize = actionIconSize,
+                        onClick = onOpenScoreTracker
+                    )
+                }
                 QuickActionButton(
                     icon = Icons.Filled.Palette,
                     description = "Themes",
@@ -314,11 +400,11 @@ fun HeaderBar(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(if (compact) 6.dp else 10.dp)
         ) {
-            // Current Score Card
+            // Interactive Current Score Card (Tappable to launch Score Tracker)
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .clip(RoundedCornerShape(10.dp))
+                    .clip(RoundedCornerShape(12.dp))
                     .background(
                         Brush.verticalGradient(
                             listOf(
@@ -327,33 +413,110 @@ fun HeaderBar(
                             )
                         )
                     )
-                    .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(10.dp))
-                    .padding(vertical = scoreCardPaddingV, horizontal = 8.dp),
+                    .border(
+                        width = 1.dp,
+                        color = if (onOpenScoreTracker != null) theme.primaryAccent.copy(alpha = 0.45f) else Color.White.copy(alpha = 0.08f),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    .clickable(enabled = onOpenScoreTracker != null) {
+                        onOpenScoreTracker?.invoke()
+                    }
+                    .padding(vertical = scoreCardPaddingV, horizontal = 8.dp)
+                    .testTag("score_tracker_card"),
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "CURRENT SCORE",
-                        fontSize = if (compact) 8.5.sp else 10.sp,
-                        color = Color.White.copy(alpha = 0.55f),
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 0.8.sp
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "SCORE",
+                            fontSize = if (compact) 8.5.sp else 10.sp,
+                            color = Color.White.copy(alpha = 0.7f),
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.8.sp
+                        )
+                        if (onOpenScoreTracker != null) {
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(theme.primaryAccent.copy(alpha = 0.2f))
+                                    .padding(horizontal = 4.dp, vertical = 0.5.dp)
+                            ) {
+                                Text(
+                                    text = "TRACKER 📊",
+                                    fontSize = 7.5.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = theme.primaryAccent
+                                )
+                            }
+                        }
+                    }
+
                     Spacer(modifier = Modifier.height(1.dp))
+
                     Text(
-                        text = score.toString(),
+                        text = animatedScore.toString(),
                         fontSize = scoreFontSize,
                         color = Color.White,
                         fontWeight = FontWeight.Black
                     )
+
+                    // Active combo badge
+                    if (comboStreak > 1) {
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(Color(0xFFFF3D00).copy(alpha = 0.25f))
+                                .border(0.5.dp, Color(0xFFFF9100), RoundedCornerShape(6.dp))
+                                .padding(horizontal = 5.dp, vertical = 1.dp)
+                        ) {
+                            Text(
+                                text = "🔥 COMBO x$comboStreak (+${comboStreak * 25}%)",
+                                fontSize = 8.sp,
+                                fontWeight = FontWeight.Black,
+                                color = Color(0xFFFFAB40)
+                            )
+                        }
+                    }
+                }
+
+                // Floating Score Gain Popup Badge
+                if (floatAlphaAnim.value > 0.01f && displayedDelta > 0) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .offset(y = floatYAnim.value.dp)
+                            .alpha(floatAlphaAnim.value)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(
+                                Brush.horizontalGradient(
+                                    listOf(
+                                        Color(0xFFFFD700),
+                                        Color(0xFFFF9100)
+                                    )
+                                )
+                            )
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = "+$displayedDelta" + if (displayedCombo > 1) " 🔥x$displayedCombo" else "",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Black,
+                            color = Color.Black
+                        )
+                    }
                 }
             }
 
             // Best High Score Card
+            val isRecordBeaten = score >= highScore && score > 0
+            val scoreProgressFraction = if (highScore > 0) (score.toFloat() / highScore.toFloat()).coerceIn(0f, 1f) else 1f
+
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .clip(RoundedCornerShape(10.dp))
+                    .clip(RoundedCornerShape(12.dp))
                     .background(
                         Brush.verticalGradient(
                             listOf(
@@ -362,25 +525,49 @@ fun HeaderBar(
                             )
                         )
                     )
-                    .border(1.dp, theme.primaryAccent.copy(alpha = 0.35f), RoundedCornerShape(10.dp))
+                    .border(
+                        width = if (isRecordBeaten) 1.5.dp else 1.dp,
+                        color = if (isRecordBeaten) Color(0xFFFFD700).copy(alpha = recordGlow) else theme.primaryAccent.copy(alpha = 0.35f),
+                        shape = RoundedCornerShape(12.dp)
+                    )
                     .padding(vertical = scoreCardPaddingV, horizontal = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "BEST RECORD",
+                        text = if (isRecordBeaten) "🏆 NEW RECORD!" else "BEST RECORD",
                         fontSize = if (compact) 8.5.sp else 10.sp,
-                        color = theme.primaryAccent.copy(alpha = 0.9f),
+                        color = if (isRecordBeaten) Color(0xFFFFD700) else theme.primaryAccent.copy(alpha = 0.9f),
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 0.8.sp
                     )
                     Spacer(modifier = Modifier.height(1.dp))
                     Text(
-                        text = highScore.toString(),
+                        text = animatedHighScore.toString(),
                         fontSize = scoreFontSize,
                         color = Color(0xFFFFD700),
                         fontWeight = FontWeight.Black
                     )
+
+                    if (!isRecordBeaten && highScore > 0) {
+                        Spacer(modifier = Modifier.height(3.dp))
+                        // Mini record distance progress bar
+                        Box(
+                            modifier = Modifier
+                                .width(if (compact) 55.dp else 75.dp)
+                                .height(3.dp)
+                                .clip(CircleShape)
+                                .background(Color.White.copy(alpha = 0.1f))
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth(scoreProgressFraction)
+                                    .height(3.dp)
+                                    .clip(CircleShape)
+                                    .background(theme.primaryAccent)
+                            )
+                        }
+                    }
                 }
             }
         }

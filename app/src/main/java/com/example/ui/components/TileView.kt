@@ -1,5 +1,6 @@
 package com.example.ui.components
 
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
@@ -22,6 +23,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.draw.alpha
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Build
@@ -61,21 +64,56 @@ fun TileView(
 ) {
     val isEligibleTarget = isTargeting && tile != null && tile.type != TileType.ARTIFACT
 
-    // Spawn & Merge animations
+    // Dynamic spring physics for tile creation & fusion
     val isMerged = tile?.mergedInTurn == true
+    val isNew = tile?.isNew == true
 
-    val scaleAnim by animateFloatAsState(
-        targetValue = when {
-            tile == null -> 0.94f
-            isMerged -> 1.0f
-            else -> 1.0f
-        },
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMediumLow
-        ),
-        label = "tileScale"
-    )
+    val spawnScale = remember(tile?.id) { Animatable(if (isNew) 0.15f else 1f) }
+    val spawnAlpha = remember(tile?.id) { Animatable(if (isNew) 0.25f else 1f) }
+    val mergeBounce = remember(tile?.id, isMerged) { Animatable(if (isMerged) 1.25f else 1f) }
+    val mergeGlowAlpha = remember(tile?.id, isMerged) { Animatable(if (isMerged) 1f else 0f) }
+
+    LaunchedEffect(tile?.id, isNew) {
+        if (isNew) {
+            spawnScale.animateTo(
+                targetValue = 1f,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessMediumLow
+                )
+            )
+        }
+    }
+
+    LaunchedEffect(tile?.id, isNew) {
+        if (isNew) {
+            spawnAlpha.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing)
+            )
+        }
+    }
+
+    LaunchedEffect(tile?.id, isMerged) {
+        if (isMerged) {
+            mergeBounce.animateTo(
+                targetValue = 1f,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessLow
+                )
+            )
+        }
+    }
+
+    LaunchedEffect(tile?.id, isMerged) {
+        if (isMerged) {
+            mergeGlowAlpha.animateTo(
+                targetValue = 0f,
+                animationSpec = tween(durationMillis = 450, easing = FastOutSlowInEasing)
+            )
+        }
+    }
 
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     val targetingPulse by infiniteTransition.animateFloat(
@@ -111,16 +149,13 @@ fun TileView(
     val tileBrush = getTileBackgroundBrush(tile, theme)
     val textColor = getTileTextColor(tile)
 
-    val finalScale = when {
-        isEligibleTarget -> scaleAnim * targetingPulse
-        isMerged -> scaleAnim * 1.06f
-        else -> scaleAnim
-    }
+    val finalScale = spawnScale.value * mergeBounce.value * (if (isEligibleTarget) targetingPulse else 1f)
 
     BoxWithConstraints(
         modifier = modifier
             .aspectRatio(1f)
             .scale(finalScale)
+            .alpha(spawnAlpha.value)
             .shadow(
                 elevation = when {
                     tile.type == TileType.ARTIFACT -> 12.dp
@@ -137,7 +172,7 @@ fun TileView(
                 width = if (isEligibleTarget) 2.5.dp else if (tile.type == TileType.ARTIFACT || tile.value >= 1024 || isMerged) 2.dp else 1.dp,
                 color = when {
                     isEligibleTarget -> Color(0xFFFFEB3B)
-                    isMerged -> Color(0xFFFFD700)
+                    isMerged -> Color(0xFFFFD700).copy(alpha = (0.5f + 0.5f * mergeGlowAlpha.value).coerceIn(0f, 1f))
                     tile.type == TileType.ARTIFACT -> Color(0xFFFFD700).copy(alpha = highTileGlow)
                     tile.value >= 2048 -> Color(0xFFFFD700).copy(alpha = highTileGlow)
                     tile.value >= 512 -> theme.primaryAccent.copy(alpha = 0.8f)
