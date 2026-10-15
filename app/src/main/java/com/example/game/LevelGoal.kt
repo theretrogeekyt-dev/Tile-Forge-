@@ -41,6 +41,8 @@ data class LevelGoal(
                 8 -> LevelGoal(8, "Obstacle Rush", "Clear 3 initial obstacles & reach 10,000 score", targetScore = 10000, targetTileValue = 512, maxMoves = 50, initialObstacles = 3)
                 9 -> LevelGoal(9, "Grand Artisan", "Forge a 1024 tile!", targetScore = 15000, targetTileValue = 1024, maxMoves = 60)
                 10 -> LevelGoal(10, "Titan's Forge", "Forge a 2048 tile & 3 Artifacts!", targetScore = 25000, targetTileValue = 2048, targetArtifactsForged = 3, maxMoves = 75, initialObstacles = 2)
+                11 -> LevelGoal(11, "U.A. Hero Exam (Plus Ultra)", "Pass the Hero Exam: Harvest 150 Energy & forge a 1024 tile!", targetScore = 18000, targetTileValue = 1024, targetEnergyCollected = 150, maxMoves = 65, initialObstacles = 2)
+                12 -> LevelGoal(12, "All Might's Legacy", "Unleash 100% Smash: Forge a 2048 tile and reach 30,000 score!", targetScore = 30000, targetTileValue = 2048, targetArtifactsForged = 3, maxMoves = 80, initialObstacles = 3)
                 else -> LevelGoal(levelId, "Master Forge $levelId", "Reach ${levelId * 2000} points & forge a high tile", targetScore = levelId * 2000, targetTileValue = 1024, maxMoves = 50 + levelId * 2)
             }
         }

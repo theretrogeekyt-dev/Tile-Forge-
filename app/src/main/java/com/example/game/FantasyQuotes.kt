@@ -188,6 +188,78 @@ object FantasyQuotes {
             speaker = "Arya Stark",
             source = "A Game of Thrones",
             loreTag = "Westeros"
+        ),
+        FantasyQuote(
+            quote = "It's fine now. Why? Because I am here!",
+            speaker = "All Might",
+            source = "My Hero Academia",
+            loreTag = "U.A. High • Plus Ultra"
+        ),
+        FantasyQuote(
+            quote = "Go beyond! PLUS ULTRA!",
+            speaker = "All Might",
+            source = "My Hero Academia",
+            loreTag = "U.A. High • Plus Ultra"
+        ),
+        FantasyQuote(
+            quote = "When there's nothing to be gained, rising to the challenge at that moment is surely the mark of a true hero!",
+            speaker = "All Might",
+            source = "My Hero Academia",
+            loreTag = "U.A. High • Plus Ultra"
+        ),
+        FantasyQuote(
+            quote = "Dreams can become reality! You too can become a hero!",
+            speaker = "All Might",
+            source = "My Hero Academia",
+            loreTag = "U.A. High • One For All"
+        ),
+        FantasyQuote(
+            quote = "Sometimes I feel like I'm a failure. But even so, I'm not gonna give up. Ever!",
+            speaker = "Izuku Midoriya (Deku)",
+            source = "My Hero Academia",
+            loreTag = "Class 1-A • Deku"
+        ),
+        FantasyQuote(
+            quote = "A smiling, dependable hero... That's what I want to be! That's why I'm giving it everything. For everyone!",
+            speaker = "Izuku Midoriya (Deku)",
+            source = "My Hero Academia",
+            loreTag = "Class 1-A • Deku"
+        ),
+        FantasyQuote(
+            quote = "It's your power, isn't it?! Whether you want to become a hero or not, it's your own power!",
+            speaker = "Izuku Midoriya (Deku)",
+            source = "My Hero Academia",
+            loreTag = "U.A. Sports Festival"
+        ),
+        FantasyQuote(
+            quote = "Stop talking. I will win. That's what a hero does!",
+            speaker = "Katsuki Bakugo (Dynamight)",
+            source = "My Hero Academia",
+            loreTag = "Class 1-A • Explosion"
+        ),
+        FantasyQuote(
+            quote = "If you wanna stop this, then stand up! Because I've got one thing to say to you: Never forget who you want to become!",
+            speaker = "Shoto Todoroki",
+            source = "My Hero Academia",
+            loreTag = "Class 1-A • Half-Cold Half-Hot"
+        ),
+        FantasyQuote(
+            quote = "A hero doesn't just save people's lives. A hero also saves their hearts. That's what I believe.",
+            speaker = "Mirio Togata (Lemillion)",
+            source = "My Hero Academia",
+            loreTag = "U.A. High • The Big 3"
+        ),
+        FantasyQuote(
+            quote = "There's nothing more cruel than letting someone fall for half-baked dreams.",
+            speaker = "Shota Aizawa (Eraser Head)",
+            source = "My Hero Academia",
+            loreTag = "U.A. High Faculty"
+        ),
+        FantasyQuote(
+            quote = "As long as you've got a passionate heart and never give up, anyone can become unbreakable!",
+            speaker = "Eijiro Kirishima (Red Riot)",
+            source = "My Hero Academia",
+            loreTag = "Class 1-A • Unbreakable"
         )
     )
 

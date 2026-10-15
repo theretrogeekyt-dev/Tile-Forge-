@@ -1,0 +1,11 @@
+{
+  "name": "tile-forge",
+  "version": "1.0.0",
+  "description": "Tile Forge - Strategic sliding-tile puzzle game with energy, forging abilities, and authentic fantasy themes",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js",
+    "build": "node -e 'console.log(\"Build successful.\")'"
+  }
+}

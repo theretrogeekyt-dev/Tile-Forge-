@@ -145,7 +145,39 @@ object ForgeThemes {
         )
     )
 
-    val allThemes = listOf(ClassicObsidian, CyberRune, CelestialGold, FrostSpire)
+    val PlusUltraOneForAll = ForgeThemeStyle(
+        id = "plus_ultra_mha",
+        name = "Plus Ultra (U.A. High)",
+        description = "One For All emerald lightning with All Might gold & crimson sparks",
+        backgroundColor = Color(0xFF07130F),
+        gridBgColor = Color(0xFF0F261E),
+        gridCellBgColor = Color(0xFF16362B),
+        primaryAccent = Color(0xFF00E676),
+        secondaryAccent = Color(0xFFFFD700),
+        tileColors = mapOf(
+            2 to Color(0xFF1B3B30),
+            4 to Color(0xFF235343),
+            8 to Color(0xFF2E6F59),
+            16 to Color(0xFF00897B),
+            32 to Color(0xFF00ACC1),
+            64 to Color(0xFF00E5FF),
+            128 to Color(0xFFFF6D00),
+            256 to Color(0xFFFF3D00),
+            512 to Color(0xFFFF1744),
+            1024 to Color(0xFFFFD600),
+            2048 to Color(0xFF00E676),
+            4096 to Color(0xFF69F0AE)
+        ),
+        specialTileColors = mapOf(
+            "crystal" to Color(0xFF00E676),
+            "anvil" to Color(0xFFFFD700),
+            "flame" to Color(0xFFFF1744),
+            "obstacle" to Color(0xFF37474F),
+            "artifact" to Color(0xFFFFEB3B)
+        )
+    )
+
+    val allThemes = listOf(ClassicObsidian, CyberRune, CelestialGold, FrostSpire, PlusUltraOneForAll)
 
     fun getThemeById(id: String): ForgeThemeStyle {
         return allThemes.find { it.id == id } ?: ClassicObsidian

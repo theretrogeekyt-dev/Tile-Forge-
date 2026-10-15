@@ -383,7 +383,8 @@ fun TutorialScreen(
     ) {
         val screenWidth = maxWidth
         val screenHeight = maxHeight
-        val isLandscape = screenWidth > screenHeight
+        val isTabletOrFoldable = screenWidth >= 600.dp
+        val isLandscape = screenWidth > screenHeight || isTabletOrFoldable
 
         if (isLandscape) {
             // Adaptive Landscape Two-Column Layout
@@ -461,7 +462,8 @@ fun TutorialScreen(
             }
         } else {
             // Adaptive Portrait Layout
-            val isShortScreen = screenHeight < 720.dp
+            val isShortScreen = screenHeight < 800.dp
+            val scrollModifier = if (isShortScreen) Modifier.verticalScroll(rememberScrollState()) else Modifier
 
             Column(
                 modifier = Modifier
@@ -469,9 +471,10 @@ fun TutorialScreen(
                     .widthIn(max = 480.dp)
                     .align(Alignment.Center)
                     .windowInsetsPadding(if (uiState.isImmersiveModeEnabled) WindowInsets.displayCutout else WindowInsets.safeDrawing)
-                    .padding(horizontal = 10.dp, vertical = if (isShortScreen) 6.dp else 10.dp),
+                    .padding(horizontal = 10.dp, vertical = if (isShortScreen) 6.dp else 10.dp)
+                    .then(scrollModifier),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceBetween
+                verticalArrangement = if (isShortScreen) Arrangement.Top else Arrangement.SpaceBetween
             ) {
                 // Top: Header & Step Progress
                 Column(

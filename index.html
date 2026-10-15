@@ -1,0 +1,1387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Tile Forge - Strategic Puzzle Game</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800;900&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d0f14;
+      --surface: #171b24;
+      --surface-elevated: #222736;
+      --surface-border: #31384e;
+      --primary: #f59e0b;
+      --primary-glow: rgba(245, 158, 11, 0.35);
+      --accent: #38bdf8;
+      --accent-glow: rgba(56, 189, 248, 0.35);
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --energy: #38bdf8;
+      --heart: #f43f5e;
+      --board-bg: #11141c;
+      --cell-bg: #1b202c;
+    }
+
+    [data-theme="neon"] {
+      --bg: #090910;
+      --surface: #121124;
+      --surface-elevated: #1f1d38;
+      --surface-border: #ff2a85;
+      --primary: #ff2a85;
+      --primary-glow: rgba(255, 42, 133, 0.4);
+      --accent: #00f0ff;
+      --accent-glow: rgba(0, 240, 255, 0.4);
+      --energy: #00f0ff;
+      --board-bg: #0d0d18;
+      --cell-bg: #16152b;
+    }
+
+    [data-theme="astral"] {
+      --bg: #0a0818;
+      --surface: #15112e;
+      --surface-elevated: #241c4f;
+      --surface-border: #6d28d9;
+      --primary: #a855f7;
+      --primary-glow: rgba(168, 85, 247, 0.4);
+      --accent: #facc15;
+      --accent-glow: rgba(250, 204, 21, 0.4);
+      --energy: #c084fc;
+      --board-bg: #0f0b24;
+      --cell-bg: #1a143b;
+    }
+
+    [data-theme="emerald"] {
+      --bg: #06140e;
+      --surface: #0c241a;
+      --surface-elevated: #153b2b;
+      --surface-border: #10b981;
+      --primary: #10b981;
+      --primary-glow: rgba(16, 185, 129, 0.4);
+      --accent: #34d399;
+      --accent-glow: rgba(52, 211, 153, 0.4);
+      --energy: #34d399;
+      --board-bg: #091a13;
+      --cell-bg: #102d20;
+    }
+
+    [data-theme="solar"] {
+      --bg: #180d04;
+      --surface: #2b1708;
+      --surface-elevated: #44240c;
+      --surface-border: #f97316;
+      --primary: #f97316;
+      --primary-glow: rgba(249, 115, 22, 0.4);
+      --accent: #fbbf24;
+      --accent-glow: rgba(251, 191, 36, 0.4);
+      --energy: #fbbf24;
+      --board-bg: #211105;
+      --cell-bg: #351c0a;
+    }
+
+    [data-theme="plus_ultra"] {
+      --bg: #07130f;
+      --surface: #0f261e;
+      --surface-elevated: #16362b;
+      --surface-border: #00e676;
+      --primary: #00e676;
+      --primary-glow: rgba(0, 230, 118, 0.45);
+      --accent: #ffd700;
+      --accent-glow: rgba(255, 215, 0, 0.45);
+      --energy: #00e676;
+      --board-bg: #0b1c16;
+      --cell-bg: #132e24;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      overflow-x: hidden;
+      touch-action: manipulation;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 500px;
+      padding: 16px 18px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* Top Nav Bar */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .logo-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      box-shadow: 0 4px 14px var(--primary-glow);
+    }
+
+    .logo-title {
+      font-family: 'Cinzel', serif;
+      font-weight: 800;
+      font-size: 1.35rem;
+      letter-spacing: 0.5px;
+      background: linear-gradient(to right, #fff, var(--primary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .bar-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .icon-btn {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      color: var(--text);
+      border-radius: 9px;
+      padding: 8px 10px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+    }
+
+    .icon-btn:hover {
+      background: var(--surface-elevated);
+      transform: translateY(-1px);
+      border-color: var(--primary);
+    }
+
+    .icon-btn:active {
+      transform: translateY(1px);
+    }
+
+    .apk-btn {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #fff;
+      border: none;
+      box-shadow: 0 2px 10px rgba(16, 185, 129, 0.3);
+      text-decoration: none;
+    }
+
+    .apk-btn:hover {
+      background: linear-gradient(135deg, #34d399, #10b981);
+      box-shadow: 0 4px 16px rgba(16, 185, 129, 0.45);
+    }
+
+    /* Score and Stats Banner */
+    .stats-card {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: 16px;
+      padding: 12px 16px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+
+    .stat-box {
+      background: var(--surface-elevated);
+      border-radius: 10px;
+      padding: 8px 6px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+
+    .stat-value {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #fff;
+      font-family: 'Plus Jakarta Sans', monospace;
+    }
+
+    .stat-value.score-val {
+      color: var(--primary);
+    }
+
+    /* Floating score animation */
+    .score-popup {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #4ade80;
+      font-weight: 800;
+      font-size: 1rem;
+      pointer-events: none;
+      opacity: 0;
+      animation: floatUp 0.8s ease-out forwards;
+    }
+
+    @keyframes floatUp {
+      0% { opacity: 1; transform: translate(-50%, -20%) scale(1.1); }
+      100% { opacity: 0; transform: translate(-50%, -100%) scale(0.9); }
+    }
+
+    /* Sub-status: Hearts, Mode, Energy */
+    .status-ribbon {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 4px;
+    }
+
+    .hearts-row {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+      background: var(--surface);
+      padding: 6px 12px;
+      border-radius: 20px;
+      border: 1px solid var(--surface-border);
+    }
+
+    .heart-icon {
+      font-size: 16px;
+      color: var(--heart);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .heart-icon.lost {
+      opacity: 0.25;
+      filter: grayscale(1);
+    }
+
+    .energy-bar-wrap {
+      flex: 1;
+      margin: 0 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .energy-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--energy);
+    }
+
+    .energy-progress-track {
+      height: 8px;
+      background: var(--surface-elevated);
+      border-radius: 4px;
+      overflow: hidden;
+      border: 1px solid var(--surface-border);
+    }
+
+    .energy-progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--energy), #60a5fa);
+      border-radius: 4px;
+      transition: width 0.3s ease;
+      box-shadow: 0 0 10px var(--accent-glow);
+    }
+
+    .mode-pill {
+      background: var(--surface-elevated);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      border: 1px solid var(--surface-border);
+      color: var(--accent);
+      cursor: pointer;
+    }
+
+    /* Game Board */
+    .board-wrapper {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      background: var(--board-bg);
+      border-radius: 20px;
+      padding: 12px;
+      border: 2px solid var(--surface-border);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 2px 8px rgba(0,0,0,0.4);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    .board-cell-slot {
+      background: var(--cell-bg);
+      border-radius: 12px;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+    }
+
+    /* Tiles container */
+    .tiles-overlay {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      pointer-events: none;
+    }
+
+    .tile {
+      position: absolute;
+      width: calc((100% - 30px) / 4);
+      height: calc((100% - 30px) / 4);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.5rem;
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+      transition: left 0.12s ease-out, top 0.12s ease-out;
+      pointer-events: auto;
+      cursor: pointer;
+    }
+
+    .tile.targetable {
+      animation: pulseTarget 1s infinite alternate;
+      border: 2px solid #fff !important;
+    }
+
+    @keyframes pulseTarget {
+      from { transform: scale(1); filter: brightness(1.1); }
+      to { transform: scale(1.08); filter: brightness(1.4); }
+    }
+
+    .tile-spawn {
+      animation: spawnAnim 0.2s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+    }
+
+    @keyframes spawnAnim {
+      0% { transform: scale(0); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .tile-merged {
+      animation: mergePop 0.22s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+    }
+
+    @keyframes mergePop {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.18); }
+      100% { transform: scale(1); }
+    }
+
+    .tile-sub {
+      font-size: 0.65rem;
+      font-weight: 700;
+      opacity: 0.85;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    /* Tier Styles */
+    .t-2    { background: linear-gradient(135deg, #334155, #1e293b); color: #f8fafc; }
+    .t-4    { background: linear-gradient(135deg, #475569, #334155); color: #f8fafc; }
+    .t-8    { background: linear-gradient(135deg, #ea580c, #c2410c); box-shadow: 0 4px 14px rgba(234, 88, 12, 0.4); }
+    .t-16   { background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4); }
+    .t-32   { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4); }
+    .t-64   { background: linear-gradient(135deg, #06b6d4, #0891b2); box-shadow: 0 4px 14px rgba(6, 182, 212, 0.4); }
+    .t-128  { background: linear-gradient(135deg, #3b82f6, #2563eb); font-size: 1.3rem; box-shadow: 0 4px 16px rgba(59, 130, 246, 0.5); }
+    .t-256  { background: linear-gradient(135deg, #8b5cf6, #7c3aed); font-size: 1.3rem; box-shadow: 0 4px 16px rgba(139, 92, 246, 0.5); }
+    .t-512  { background: linear-gradient(135deg, #ec4899, #db2777); font-size: 1.3rem; box-shadow: 0 4px 18px rgba(236, 72, 153, 0.6); }
+    .t-1024 { background: linear-gradient(135deg, #f43f5e, #e11d48); font-size: 1.15rem; box-shadow: 0 6px 22px rgba(244, 63, 94, 0.7); }
+    .t-2048 { background: linear-gradient(135deg, #ffd700, #ff8c00); font-size: 1.15rem; color: #000; box-shadow: 0 0 25px rgba(255, 215, 0, 0.8); }
+    .t-4096 { background: linear-gradient(135deg, #00f0ff, #7000ff); font-size: 1.15rem; box-shadow: 0 0 30px rgba(0, 240, 255, 0.9); }
+    .t-crystal { background: linear-gradient(135deg, #38bdf8, #0284c7); border: 2px dashed #bae6fd; font-size: 1.1rem; }
+    .t-anvil   { background: linear-gradient(135deg, #64748b, #475569); border: 2px solid #cbd5e1; font-size: 1.1rem; }
+    .t-flame   { background: linear-gradient(135deg, #f97316, #dc2626); border: 2px solid #fed7aa; font-size: 1.1rem; }
+    .t-rock    { background: linear-gradient(135deg, #262626, #171717); border: 2px solid #525252; color: #a3a3a3; font-size: 1.1rem; }
+
+    /* Arcane Powers Bar */
+    .powers-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .power-btn {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: 12px;
+      padding: 10px 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      color: var(--text);
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s ease;
+    }
+
+    .power-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      filter: grayscale(0.8);
+    }
+
+    .power-btn.active {
+      border-color: var(--primary);
+      background: var(--surface-elevated);
+      box-shadow: 0 0 12px var(--primary-glow);
+    }
+
+    .power-icon {
+      font-size: 20px;
+    }
+
+    .power-name {
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+
+    .power-cost {
+      font-size: 0.65rem;
+      font-weight: 800;
+      color: var(--energy);
+    }
+
+    /* Tactile D-Pad Controls for Touch / Keyboard */
+    .dpad-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .dpad-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .dpad-btn {
+      width: 54px;
+      height: 44px;
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      color: var(--text);
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+    }
+
+    .dpad-btn:active {
+      background: var(--primary);
+      color: #000;
+      transform: scale(0.92);
+    }
+
+    /* Modals & Dialogs */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 20px;
+    }
+
+    .modal-card {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: 20px;
+      max-width: 420px;
+      width: 100%;
+      padding: 24px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-title {
+      font-family: 'Cinzel', serif;
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .btn-block {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      border: none;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-decoration: none;
+      box-sizing: border-box;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), #d97706);
+      color: #000;
+      box-shadow: 0 4px 16px var(--primary-glow);
+    }
+
+    .btn-secondary {
+      background: var(--surface-elevated);
+      color: var(--text);
+      border: 1px solid var(--surface-border);
+    }
+
+    .level-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      background: var(--surface-elevated);
+      border: 1px solid var(--surface-border);
+      border-radius: 12px;
+      cursor: pointer;
+    }
+
+    .level-item.active {
+      border-color: var(--primary);
+      background: rgba(245, 158, 11, 0.1);
+    }
+
+    .lore-card {
+      background: rgba(255, 255, 255, 0.03);
+      border-left: 3px solid var(--primary);
+      padding: 10px 14px;
+      border-radius: 0 8px 8px 0;
+      font-style: italic;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body data-theme="obsidian">
+
+  <div class="app-container">
+    <!-- Top Bar -->
+    <header class="top-bar">
+      <div class="logo-badge">
+        <div class="logo-icon">⚒️</div>
+        <h1 class="logo-title">Tile Forge</h1>
+      </div>
+      <div class="bar-actions">
+        <button class="icon-btn" id="soundBtn" title="Toggle Sound">🔊</button>
+        <button class="icon-btn" id="themeBtn" title="Change Theme">🎨</button>
+        <button class="icon-btn" id="levelsBtn" title="Game Modes & Levels">🏆</button>
+        <a href="/download/app-debug.apk" download="TileForge.apk" class="icon-btn apk-btn" title="Download Android APK">
+          🤖 APK
+        </a>
+      </div>
+    </header>
+
+    <!-- Score & Stats Ribbon -->
+    <section class="stats-card">
+      <div class="stat-box" id="scoreBox">
+        <div class="stat-label">Score</div>
+        <div class="stat-value score-val" id="scoreVal">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Best</div>
+        <div class="stat-value" id="bestVal">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Moves</div>
+        <div class="stat-value" id="movesVal">0</div>
+      </div>
+    </section>
+
+    <!-- Sub Status (Hearts, Energy, Mode) -->
+    <div class="status-ribbon">
+      <div class="hearts-row" id="heartsRow" title="3 Rescue Hearts protect against Game Over">
+        <span class="heart-icon" id="h1">❤️</span>
+        <span class="heart-icon" id="h2">❤️</span>
+        <span class="heart-icon" id="h3">❤️</span>
+      </div>
+
+      <div class="energy-bar-wrap">
+        <div class="energy-labels">
+          <span>⚡ ARCANE ENERGY</span>
+          <span id="energyNum">0 / 100</span>
+        </div>
+        <div class="energy-progress-track">
+          <div class="energy-progress-fill" id="energyFill"></div>
+        </div>
+      </div>
+
+      <div class="mode-pill" id="modePill">Endless ▾</div>
+    </div>
+
+    <!-- Active Lore Quote -->
+    <div class="lore-card" id="loreCard">
+      "In the heat of the forge, raw stone turns to eternal gold."
+    </div>
+
+    <!-- 4x4 Game Board -->
+    <main class="board-wrapper" id="boardWrapper">
+      <!-- 16 Static Background Cell Slots -->
+      <div class="board-cell-slot"></div><div class="board-cell-slot"></div><div class="board-cell-slot"></div><div class="board-cell-slot"></div>
+      <div class="board-cell-slot"></div><div class="board-cell-slot"></div><div class="board-cell-slot"></div><div class="board-cell-slot"></div>
+      <div class="board-cell-slot"></div><div class="board-cell-slot"></div><div class="board-cell-slot"></div><div class="board-cell-slot"></div>
+      <div class="board-cell-slot"></div><div class="board-cell-slot"></div><div class="board-cell-slot"></div><div class="board-cell-slot"></div>
+
+      <!-- Moving Dynamic Tile Elements -->
+      <div class="tiles-overlay" id="tilesOverlay"></div>
+    </main>
+
+    <!-- Arcane Power Abilities Bar -->
+    <section class="powers-bar">
+      <button class="power-btn" id="shatterBtn" title="Shatter any tile or obstacle">
+        <span class="power-icon">💥</span>
+        <span class="power-name">Shatter</span>
+        <span class="power-cost">20 ⚡</span>
+      </button>
+
+      <button class="power-btn" id="duplicateBtn" title="Duplicate a tile tier">
+        <span class="power-icon">✨</span>
+        <span class="power-name">Duplicate</span>
+        <span class="power-cost">40 ⚡</span>
+      </button>
+
+      <button class="power-btn" id="transmuteBtn" title="Upgrade target tile tier">
+        <span class="power-icon">🪄</span>
+        <span class="power-name">Transmute</span>
+        <span class="power-cost">50 ⚡</span>
+      </button>
+
+      <button class="power-btn" id="burnBtn" title="Incinerate all 2 and 4 clutter tiles">
+        <span class="power-icon">🔥</span>
+        <span class="power-name">Ignis Burn</span>
+        <span class="power-cost" id="burnCooldownText">Ready</span>
+      </button>
+    </section>
+
+    <!-- Tactile D-Pad Controls for Touch / Keyboard -->
+    <div class="dpad-container">
+      <div class="dpad-row">
+        <button class="dpad-btn" onclick="handleMove('UP')">▲</button>
+      </div>
+      <div class="dpad-row">
+        <button class="dpad-btn" onclick="handleMove('LEFT')">◀</button>
+        <button class="dpad-btn" onclick="handleMove('DOWN')">▼</button>
+        <button class="dpad-btn" onclick="handleMove('RIGHT')">▶</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Over / Victory Modal -->
+  <div class="modal-backdrop" id="gameOverModal">
+    <div class="modal-card">
+      <h2 class="modal-title" id="goTitle">The Fire Fades...</h2>
+      <p id="goMsg" style="color: var(--text-muted); line-height: 1.5;">
+        All rescue hearts have been consumed and no valid moves remain on the anvil.
+      </p>
+      <div class="stats-card">
+        <div class="stat-box">
+          <div class="stat-label">Final Score</div>
+          <div class="stat-value score-val" id="goScore">0</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Best Tile</div>
+          <div class="stat-value" id="goBestTile">2048</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Total Moves</div>
+          <div class="stat-value" id="goMoves">0</div>
+        </div>
+      </div>
+      <button class="btn-block btn-primary" onclick="restartGame()">Reignite the Forge ⚔️</button>
+      <a href="/download/app-debug.apk" download="TileForge.apk" class="btn-block btn-secondary">
+        📱 Play on Android Device (Download APK)
+      </a>
+    </div>
+  </div>
+
+  <!-- Level Select Modal -->
+  <div class="modal-backdrop" id="levelModal">
+    <div class="modal-card">
+      <div class="modal-title">
+        <span>Select Challenge</span>
+        <button class="icon-btn" onclick="closeLevelModal()">✕</button>
+      </div>
+      <div id="levelsList" style="display:flex; flex-direction:column; gap:8px;"></div>
+    </div>
+  </div>
+
+  <!-- Audio Synthesizer Engine & Logic -->
+  <script>
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+        this.muted = localStorage.getItem('tf_sound_muted') === 'true';
+        this.updateBtn();
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) this.ctx = new AudioContext();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      toggleMute() {
+        this.muted = !this.muted;
+        localStorage.setItem('tf_sound_muted', this.muted);
+        this.updateBtn();
+      }
+
+      updateBtn() {
+        const btn = document.getElementById('soundBtn');
+        if (btn) btn.textContent = this.muted ? '🔇' : '🔊';
+      }
+
+      playSlide() {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        const now = this.ctx.currentTime;
+        osc.frequency.setValueAtTime(220, now);
+        osc.frequency.exponentialRampToValueAtTime(330, now + 0.08);
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.08);
+      }
+
+      playMerge(tier) {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        const now = this.ctx.currentTime;
+        const baseFreq = 261.63; // C4
+        const freq = baseFreq * Math.pow(2, Math.min(tier, 11) / 12);
+        osc.frequency.setValueAtTime(freq, now);
+        osc.frequency.exponentialRampToValueAtTime(freq * 1.5, now + 0.15);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.18);
+      }
+
+      playPower() {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        const now = this.ctx.currentTime;
+        osc.frequency.setValueAtTime(600, now);
+        osc.frequency.exponentialRampToValueAtTime(150, now + 0.25);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.25);
+      }
+
+      playRescue() {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        [330, 440, 660].forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+          gain.gain.setValueAtTime(0.12, now + idx * 0.08);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.25);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now + idx * 0.08);
+          osc.stop(now + idx * 0.08 + 0.25);
+        });
+      }
+    }
+
+    const sound = new SoundEngine();
+    document.getElementById('soundBtn').onclick = () => sound.toggleMute();
+
+    // Theme Switcher
+    const themes = ['obsidian', 'plus_ultra', 'neon', 'astral', 'emerald', 'solar'];
+    let currentThemeIdx = 0;
+    const savedTheme = localStorage.getItem('tf_theme') || 'obsidian';
+    currentThemeIdx = Math.max(0, themes.indexOf(savedTheme));
+    document.body.setAttribute('data-theme', themes[currentThemeIdx]);
+
+    document.getElementById('themeBtn').onclick = () => {
+      currentThemeIdx = (currentThemeIdx + 1) % themes.length;
+      const theme = themes[currentThemeIdx];
+      document.body.setAttribute('data-theme', theme);
+      localStorage.setItem('tf_theme', theme);
+    };
+
+    // Lore Quotes with My Hero Academia references
+    const quotes = [
+      "In the heat of the forge, raw stone turns to eternal gold.",
+      "Patience tempers the blade; strategy tempers the mind.",
+      "The anvil does not break when the hammer strikes true.",
+      "Harvest the crystals of the ancients to reshape the grid.",
+      "A true artisan sees three merges ahead.",
+      "Even a solitary ember can ignite a boundless blaze.",
+      "It's fine now. Why? Because I am here! — All Might",
+      "Go beyond! PLUS ULTRA! — All Might",
+      "Rising to the challenge at that moment is the mark of a true hero! — All Might",
+      "Dreams can become reality! You too can become a hero! — All Might",
+      "Sometimes I feel like I'm a failure. But even so, I'm not gonna give up. Ever! — Deku",
+      "A smiling, dependable hero... That's what I want to be! — Deku",
+      "It's your power, isn't it?! It's your own power! — Deku",
+      "Stop talking. I will win. That's what a hero does! — Katsuki Bakugo",
+      "Never forget who you want to become! — Shoto Todoroki",
+      "A hero doesn't just save people's lives. A hero also saves their hearts. — Lemillion",
+      "There's nothing more cruel than letting someone fall for half-baked dreams. — Eraser Head",
+      "As long as you've got a passionate heart and never give up, anyone can become unbreakable! — Red Riot"
+    ];
+
+    // Game Levels Definition
+    const LEVELS = [
+      { id: 'endless', name: 'Endless Forge', desc: 'Craft without limits; push for the 4096 relic', maxMoves: null, targetVal: 2048 },
+      { id: 'daily', name: 'Daily Crucible', desc: 'Synchronized daily seed worldwide', maxMoves: 100, targetVal: 1024 },
+      { id: 'lvl1', name: 'Level 1: Spark of Creation', desc: 'Reach a 128 tile within 60 moves', maxMoves: 60, targetVal: 128 },
+      { id: 'lvl2', name: 'Level 2: Granite Vein', desc: 'Break rocky obstacles and craft 256', maxMoves: 75, targetVal: 256, obstacles: 2 },
+      { id: 'lvl3', name: 'Level 3: Arcane Surge', desc: 'Harvest 100 energy and craft 512', maxMoves: 90, targetVal: 512 },
+      { id: 'lvl4', name: 'Level 4: Iron Bastion', desc: 'Craft 1024 through stubborn iron barriers', maxMoves: 120, targetVal: 1024, obstacles: 3 },
+      { id: 'lvl5', name: 'Level 5: Sovereign Relic', desc: 'Forge the mythical 2048 artifact', maxMoves: 150, targetVal: 2048 }
+    ];
+
+    let currentLevel = LEVELS[0];
+
+    // State Variables
+    let grid = Array(4).fill(null).map(() => Array(4).fill(null));
+    let score = 0;
+    let bestScore = parseInt(localStorage.getItem('tf_best_score') || '0', 10);
+    let moves = 0;
+    let energy = 20;
+    let hearts = 3;
+    let activePower = null;
+    let burnCooldown = 0;
+    let nextTileId = 1;
+
+    document.getElementById('bestVal').textContent = bestScore;
+
+    function spawnTile(type = 'number', forcedVal = null) {
+      const empties = [];
+      for (let r = 0; r < 4; r++) {
+        for (let c = 0; c < 4; c++) {
+          if (!grid[r][c]) empties.push({ r, c });
+        }
+      }
+      if (empties.length === 0) return null;
+
+      const pick = empties[Math.floor(Math.random() * empties.length)];
+      let val = forcedVal;
+      if (!val) {
+        if (type === 'crystal') val = 4;
+        else if (type === 'anvil') val = 8;
+        else if (type === 'flame') val = 16;
+        else if (type === 'rock') val = 0;
+        else val = Math.random() < 0.85 ? 2 : 4;
+      }
+
+      const tile = {
+        id: nextTileId++,
+        value: val,
+        type: type,
+        r: pick.r,
+        c: pick.c,
+        isNew: true
+      };
+      grid[pick.r][pick.c] = tile;
+      return tile;
+    }
+
+    function initGame() {
+      grid = Array(4).fill(null).map(() => Array(4).fill(null));
+      score = 0;
+      moves = 0;
+      energy = 25;
+      hearts = 3;
+      activePower = null;
+      burnCooldown = 0;
+
+      updateHeartsUI();
+      updateEnergyUI();
+      updateScoreUI();
+      document.getElementById('burnCooldownText').textContent = 'Ready';
+
+      // Pick lore quote
+      const quoteText = quotes[Math.floor(Math.random() * quotes.length)];
+      document.getElementById('loreCard').textContent = '"' + quoteText + '"';
+      document.getElementById('modePill').textContent = currentLevel.name.split(':')[0] + ' ▾';
+
+      // Spawn initial tiles
+      spawnTile('number');
+      spawnTile('number');
+      if (Math.random() < 0.6) spawnTile('crystal');
+      if (currentLevel.obstacles) {
+        for (let i = 0; i < currentLevel.obstacles; i++) {
+          spawnTile('rock');
+        }
+      }
+
+      renderTiles();
+    }
+
+    function updateScoreUI(points = 0) {
+      document.getElementById('scoreVal').textContent = score;
+      document.getElementById('movesVal').textContent = moves;
+      if (score > bestScore) {
+        bestScore = score;
+        localStorage.setItem('tf_best_score', bestScore);
+        document.getElementById('bestVal').textContent = bestScore;
+      }
+      if (points > 0) {
+        const popup = document.createElement('div');
+        popup.className = 'score-popup';
+        popup.textContent = '+' + points;
+        document.getElementById('scoreBox').appendChild(popup);
+        setTimeout(() => popup.remove(), 800);
+      }
+    }
+
+    function updateEnergyUI() {
+      energy = Math.max(0, Math.min(100, energy));
+      document.getElementById('energyNum').textContent = energy + ' / 100';
+      document.getElementById('energyFill').style.width = energy + '%';
+
+      document.getElementById('shatterBtn').disabled = energy < 20;
+      document.getElementById('duplicateBtn').disabled = energy < 40;
+      document.getElementById('transmuteBtn').disabled = energy < 50;
+      document.getElementById('burnBtn').disabled = burnCooldown > 0;
+    }
+
+    function updateHeartsUI() {
+      ['h1', 'h2', 'h3'].forEach((id, idx) => {
+        const el = document.getElementById(id);
+        if (idx < hearts) el.classList.remove('lost');
+        else el.classList.add('lost');
+      });
+    }
+
+    function renderTiles() {
+      const overlay = document.getElementById('tilesOverlay');
+      overlay.innerHTML = '';
+
+      for (let r = 0; r < 4; r++) {
+        for (let c = 0; c < 4; c++) {
+          const t = grid[r][c];
+          if (!t) continue;
+
+          const el = document.createElement('div');
+          let styleClass = 't-' + t.value;
+          let label = t.value;
+          let sub = '';
+
+          if (t.type === 'crystal') {
+            styleClass = 't-crystal';
+            label = '⚡' + t.value;
+            sub = 'Energy';
+          } else if (t.type === 'anvil') {
+            styleClass = 't-anvil';
+            label = '⚒️' + t.value;
+            sub = 'Anvil';
+          } else if (t.type === 'flame') {
+            styleClass = 't-flame';
+            label = '🔥' + t.value;
+            sub = 'Flame';
+          } else if (t.type === 'rock') {
+            styleClass = 't-rock';
+            label = '🪨';
+            sub = 'Obstacle';
+          }
+
+          el.className = 'tile ' + styleClass + (t.isNew ? ' tile-spawn' : '') + (t.merged ? ' tile-merged' : '') + (activePower ? ' targetable' : '');
+          el.style.left = 'calc(' + c + ' * 25% + 0px)';
+          el.style.top = 'calc(' + r + ' * 25% + 0px)';
+
+          el.innerHTML = '<span>' + label + '</span>' + (sub ? '<span class="tile-sub">' + sub + '</span>' : '');
+
+          el.onclick = () => onTileClicked(r, c);
+          overlay.appendChild(el);
+          t.isNew = false;
+          t.merged = false;
+        }
+      }
+    }
+
+    // Sliding Mechanics
+    function handleMove(direction) {
+      if (activePower) {
+        cancelPower();
+        return;
+      }
+
+      let moved = false;
+      let totalGainedPoints = 0;
+
+      const rot = {
+        'LEFT': 0,
+        'DOWN': 1,
+        'RIGHT': 2,
+        'UP': 3
+      }[direction];
+
+      for (let i = 0; i < rot; i++) rotateBoardClockwise();
+
+      for (let r = 0; r < 4; r++) {
+        let row = grid[r].filter(t => t !== null);
+        let mergedRow = [];
+        let i = 0;
+        while (i < row.length) {
+          if (row[i].type === 'rock') {
+            mergedRow.push(row[i]);
+            i++;
+            continue;
+          }
+          if (i + 1 < row.length && row[i+1].type !== 'rock' && row[i].value === row[i+1].value) {
+            const nextVal = row[i].value * 2;
+            totalGainedPoints += nextVal;
+            energy += (row[i].type === 'crystal' || row[i+1].type === 'crystal') ? 25 : 5;
+
+            sound.playMerge(Math.log2(nextVal));
+
+            mergedRow.push({
+              id: nextTileId++,
+              value: nextVal,
+              type: (row[i].type === 'crystal' || row[i+1].type === 'crystal') ? 'crystal' : 'number',
+              merged: true,
+              isNew: false
+            });
+            i += 2;
+            moved = true;
+          } else {
+            mergedRow.push(row[i]);
+            i++;
+          }
+        }
+        while (mergedRow.length < 4) mergedRow.push(null);
+
+        for (let c = 0; c < 4; c++) {
+          if (grid[r][c] !== mergedRow[c]) moved = true;
+          grid[r][c] = mergedRow[c];
+        }
+      }
+
+      for (let i = 0; i < (4 - rot) % 4; i++) rotateBoardClockwise();
+
+      if (moved) {
+        sound.playSlide();
+        moves++;
+        score += totalGainedPoints;
+        if (burnCooldown > 0) {
+          burnCooldown--;
+          if (burnCooldown === 0) document.getElementById('burnCooldownText').textContent = 'Ready';
+          else document.getElementById('burnCooldownText').textContent = burnCooldown + ' moves';
+        }
+
+        const rand = Math.random();
+        if (rand < 0.15) spawnTile('crystal');
+        else if (rand < 0.22) spawnTile('flame');
+        else spawnTile('number');
+
+        updateScoreUI(totalGainedPoints);
+        updateEnergyUI();
+        renderTiles();
+
+        checkBoardState();
+      }
+    }
+
+    function rotateBoardClockwise() {
+      const next = Array(4).fill(null).map(() => Array(4).fill(null));
+      for (let r = 0; r < 4; r++) {
+        for (let c = 0; c < 4; c++) {
+          next[c][3 - r] = grid[r][c];
+        }
+      }
+      grid = next;
+    }
+
+    function checkBoardState() {
+      if (currentLevel.targetVal) {
+        for (let r = 0; r < 4; r++) {
+          for (let c = 0; c < 4; c++) {
+            if (grid[r][c] && grid[r][c].value >= currentLevel.targetVal) {
+              triggerVictory();
+              return;
+            }
+          }
+        }
+      }
+
+      if (currentLevel.maxMoves && moves >= currentLevel.maxMoves) {
+        triggerGameOver("Move Limit Reached!");
+        return;
+      }
+
+      if (!hasValidMoves()) {
+        if (hearts > 1) {
+          hearts--;
+          updateHeartsUI();
+          sound.playRescue();
+          for (let r = 0; r < 4; r++) {
+            for (let c = 0; c < 4; c++) {
+              if (grid[r][c] && (grid[r][c].value === 2 || grid[r][c].value === 4)) {
+                grid[r][c] = null;
+              }
+            }
+          }
+          spawnTile('crystal');
+          renderTiles();
+          alert("❤️ Rescue Heart triggered! Lower clutter cleared to keep the forge alive!");
+        } else {
+          hearts = 0;
+          updateHeartsUI();
+          triggerGameOver("Out of Moves");
+        }
+      }
+    }
+
+    function hasValidMoves() {
+      for (let r = 0; r < 4; r++) {
+        for (let c = 0; c < 4; c++) {
+          if (!grid[r][c]) return true;
+          if (grid[r][c].type === 'rock') continue;
+          if (c + 1 < 4 && grid[r][c+1] && grid[r][c+1].type !== 'rock' && grid[r][c].value === grid[r][c+1].value) return true;
+          if (r + 1 < 4 && grid[r+1][c] && grid[r+1][c].type !== 'rock' && grid[r][c].value === grid[r+1][c].value) return true;
+        }
+      }
+      return false;
+    }
+
+    function triggerGameOver(reason = "The Fire Fades...") {
+      document.getElementById('goTitle').textContent = reason;
+      document.getElementById('goScore').textContent = score;
+      document.getElementById('goMoves').textContent = moves;
+
+      let maxTile = 2;
+      for (let r = 0; r < 4; r++) {
+        for (let c = 0; c < 4; c++) {
+          if (grid[r][c] && grid[r][c].value > maxTile) maxTile = grid[r][c].value;
+        }
+      }
+      document.getElementById('goBestTile').textContent = maxTile;
+      document.getElementById('gameOverModal').style.display = 'flex';
+    }
+
+    function triggerVictory() {
+      sound.playRescue();
+      triggerGameOver("Master Artisan Victory! 🌟");
+    }
+
+    function restartGame() {
+      document.getElementById('gameOverModal').style.display = 'none';
+      initGame();
+    }
+
+    // Power abilities
+    document.getElementById('shatterBtn').onclick = () => activatePower('shatter', 20);
+    document.getElementById('duplicateBtn').onclick = () => activatePower('duplicate', 40);
+    document.getElementById('transmuteBtn').onclick = () => activatePower('transmute', 50);
+
+    document.getElementById('burnBtn').onclick = () => {
+      if (burnCooldown > 0) return;
+      sound.playPower();
+      let cleared = 0;
+      for (let r = 0; r < 4; r++) {
+        for (let c = 0; c < 4; c++) {
+          if (grid[r][c] && (grid[r][c].value === 2 || grid[r][c].value === 4)) {
+            grid[r][c] = null;
+            cleared++;
+          }
+        }
+      }
+      burnCooldown = 15;
+      document.getElementById('burnCooldownText').textContent = '15 moves';
+      renderTiles();
+      alert('🔥 Ignis Burn obliterated ' + cleared + ' low-tier clutter tiles!');
+      updateEnergyUI();
+    };
+
+    function activatePower(power, cost) {
+      if (energy < cost) return;
+      if (activePower === power) {
+        cancelPower();
+        return;
+      }
+      activePower = power;
+      document.querySelectorAll('.power-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(power + 'Btn').classList.add('active');
+      renderTiles();
+    }
+
+    function cancelPower() {
+      activePower = null;
+      document.querySelectorAll('.power-btn').forEach(b => b.classList.remove('active'));
+      renderTiles();
+    }
+
+    function onTileClicked(r, c) {
+      if (!activePower) return;
+      const t = grid[r][c];
+      if (!t) return;
+
+      if (activePower === 'shatter') {
+        sound.playPower();
+        grid[r][c] = null;
+        energy -= 20;
+      } else if (activePower === 'duplicate') {
+        sound.playPower();
+        spawnTile('number', t.value);
+        energy -= 40;
+      } else if (activePower === 'transmute') {
+        sound.playPower();
+        if (t.type !== 'rock') {
+          t.value *= 2;
+          t.merged = true;
+          score += t.value;
+          updateScoreUI(t.value);
+        }
+        energy -= 50;
+      }
+
+      cancelPower();
+      updateEnergyUI();
+      renderTiles();
+    }
+
+    // Keyboard bindings
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') handleMove('UP');
+      else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') handleMove('DOWN');
+      else if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') handleMove('LEFT');
+      else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') handleMove('RIGHT');
+    });
+
+    // Touch Swipe Support
+    let touchStartX = 0, touchStartY = 0;
+    const boardEl = document.getElementById('boardWrapper');
+    boardEl.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+      touchStartY = e.changedTouches[0].screenY;
+    }, { passive: true });
+
+    boardEl.addEventListener('touchend', (e) => {
+      const dx = e.changedTouches[0].screenX - touchStartX;
+      const dy = e.changedTouches[0].screenY - touchStartY;
+      if (Math.abs(dx) > Math.abs(dy)) {
+        if (Math.abs(dx) > 30) handleMove(dx > 0 ? 'RIGHT' : 'LEFT');
+      } else {
+        if (Math.abs(dy) > 30) handleMove(dy > 0 ? 'DOWN' : 'UP');
+      }
+    }, { passive: true });
+
+    // Level selection modal
+    document.getElementById('levelsBtn').onclick = openLevelModal;
+    document.getElementById('modePill').onclick = openLevelModal;
+
+    function openLevelModal() {
+      const list = document.getElementById('levelsList');
+      list.innerHTML = '';
+      LEVELS.forEach(lvl => {
+        const item = document.createElement('div');
+        item.className = 'level-item ' + (lvl.id === currentLevel.id ? 'active' : '');
+        item.innerHTML = '<div><div style="font-weight:700;">' + lvl.name + '</div><div style="font-size:0.75rem; color:var(--text-muted);">' + lvl.desc + '</div></div><div style="font-weight:800; color:var(--primary);">' + (lvl.targetVal ? 'Target ' + lvl.targetVal : 'Endless') + '</div>';
+        item.onclick = () => {
+          currentLevel = lvl;
+          closeLevelModal();
+          initGame();
+        };
+        list.appendChild(item);
+      });
+      document.getElementById('levelModal').style.display = 'flex';
+    }
+
+    function closeLevelModal() {
+      document.getElementById('levelModal').style.display = 'none';
+    }
+
+    // Start
+    initGame();
+  </script>
+</body>
+</html>

@@ -286,7 +286,11 @@ class GameBoard {
 
         if (moved) {
             moves++
-            comboCount = if (totalMerges > 1) comboCount + 1 else 1
+            if (totalMerges > 0) {
+                comboCount++
+            } else {
+                comboCount = 0
+            }
             lastSlideDirection = direction
             lastSlideTimestamp = System.currentTimeMillis()
 
@@ -298,7 +302,7 @@ class GameBoard {
             }
 
             // Combo multiplier bonus
-            val comboBonus = if (comboCount > 1) (finalScoreGained * (comboCount * 0.25)).toInt() else 0
+            val comboBonus = if (comboCount > 1) (finalScoreGained * (comboCount * 0.20)).toInt() else 0
             if (comboCount > 1) {
                 finalScoreGained += comboBonus
                 totalScoreFromCombos += comboBonus
@@ -407,9 +411,11 @@ class GameBoard {
                 type = TileType.ARTIFACT,
                 artifactType = randomArtifact,
                 mergedInTurn = true,
-                isNew = true,
+                isNew = false,
                 row = r,
-                col = c
+                col = c,
+                previousRow = source.previousRow,
+                previousCol = source.previousCol
             )
             return MergeOutcome(newTile, scoreGained = newValue * 3 + 100, energyGained = 25, artifactForged = randomArtifact)
         }
@@ -421,9 +427,11 @@ class GameBoard {
                 value = 4,
                 type = TileType.STANDARD,
                 mergedInTurn = true,
-                isNew = true,
+                isNew = false,
                 row = r,
-                col = c
+                col = c,
+                previousRow = source.previousRow,
+                previousCol = source.previousCol
             )
             return MergeOutcome(newTile, scoreGained = 50, energyGained = totalEnergy, artifactForged = null)
         }
@@ -435,9 +443,11 @@ class GameBoard {
                 value = newValue,
                 type = TileType.FORGE_FLAME,
                 mergedInTurn = true,
-                isNew = true,
+                isNew = false,
                 row = r,
-                col = c
+                col = c,
+                previousRow = source.previousRow,
+                previousCol = source.previousCol
             )
             return MergeOutcome(newTile, scoreGained = (newValue * 2.5).toInt(), energyGained = 10, artifactForged = null)
         }
@@ -483,9 +493,11 @@ class GameBoard {
             type = TileType.STANDARD,
             powerType = powerType,
             mergedInTurn = true,
-            isNew = true,
+            isNew = false,
             row = r,
-            col = c
+            col = c,
+            previousRow = source.previousRow,
+            previousCol = source.previousCol
         )
 
         return MergeOutcome(newTile, scoreGained = baseScore * multiplier, energyGained = bonusEnergy, artifactForged = null)

@@ -110,7 +110,8 @@ fun GameScreen(
     ) {
         val screenWidth = maxWidth
         val screenHeight = maxHeight
-        val isLandscapeTwoPane = screenWidth > screenHeight
+        val isTabletOrFoldable = screenWidth >= 600.dp
+        val isLandscapeTwoPane = screenWidth > screenHeight || isTabletOrFoldable
 
         if (isLandscapeTwoPane) {
             // Adaptive Landscape Two-Pane Layout (Clean, streamlined, fits comfortably on screen)
@@ -209,7 +210,7 @@ fun GameScreen(
             }
         } else {
             // Adaptive Portrait Mode (Phones, Foldables, Tablets)
-            val isShortScreen = screenHeight < 680.dp
+            val isShortScreen = screenHeight < 780.dp
             val scrollModifier = if (isShortScreen) Modifier.verticalScroll(rememberScrollState()) else Modifier
 
             Column(

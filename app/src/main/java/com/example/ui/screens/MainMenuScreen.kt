@@ -164,22 +164,27 @@ fun MainMenuScreen(
         val screenWidth = maxWidth
         val screenHeight = maxHeight
         val isLandscape = screenWidth > screenHeight
+        val isTabletOrFoldable = screenWidth >= 600.dp
+        val useTwoPaneLayout = isLandscape || isTabletOrFoldable
 
-        if (isLandscape) {
-            // Adaptive Landscape Layout (Clean, balanced 2-column layout that fits 100% on screen)
+        if (useTwoPaneLayout) {
+            // Adaptive Landscape & Tablet Two-Pane Layout (Clean, balanced 2-column layout that fits 100% on tablets and landscape screens)
             Row(
                 modifier = Modifier
                     .fillMaxSize()
+                    .widthIn(max = 1040.dp)
+                    .align(Alignment.Center)
                     .windowInsetsPadding(if (uiState.isImmersiveModeEnabled) WindowInsets.displayCutout else WindowInsets.safeDrawing)
-                    .padding(horizontal = 24.dp, vertical = 10.dp),
-                horizontalArrangement = Arrangement.spacedBy(20.dp),
+                    .padding(horizontal = if (screenWidth >= 800.dp) 32.dp else 20.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.spacedBy(if (screenWidth >= 800.dp) 28.dp else 18.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Left Column: Brand, Status, Quick Bar & Lore Highlight
                 Column(
                     modifier = Modifier
                         .weight(1f)
-                        .fillMaxHeight(),
+                        .fillMaxHeight()
+                        .verticalScroll(rememberScrollState()),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.SpaceBetween
                 ) {
@@ -195,21 +200,23 @@ fun MainMenuScreen(
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp)
                     ) {
-                        ForgeHeroEmblem(pulseGlow = pulseGlow, sizeDp = 48)
+                        ForgeHeroEmblem(pulseGlow = pulseGlow, sizeDp = if (isTabletOrFoldable) 56 else 48)
                         Spacer(modifier = Modifier.width(14.dp))
                         Column {
                             Text(
                                 text = "TILE FORGE",
-                                fontSize = 22.sp,
+                                fontSize = if (isTabletOrFoldable) 25.sp else 22.sp,
                                 fontWeight = FontWeight.Black,
                                 color = Color.White,
                                 letterSpacing = 2.sp
                             )
                             Text(
                                 text = "Slide • Merge • Forge Relics",
-                                fontSize = 10.5.sp,
+                                fontSize = if (isTabletOrFoldable) 11.5.sp else 10.5.sp,
                                 fontWeight = FontWeight.Medium,
                                 color = Color.White.copy(alpha = 0.65f)
                             )
@@ -225,18 +232,19 @@ fun MainMenuScreen(
                     )
                 }
 
-                // Right Column: Play Modes & Single-Row Utility Bar
+                // Right Column: Play Modes & Utility Bar
                 Column(
                     modifier = Modifier
                         .weight(1.35f)
-                        .fillMaxHeight(),
+                        .fillMaxHeight()
+                        .verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.SpaceBetween,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     MainMenuPlayModes(
                         unlockedLevelsCount = unlockedLevelsCount,
                         dailyQuestHighScore = gameStats?.dailyQuestHighScore ?: 0,
-                        compact = true,
+                        compact = !isTabletOrFoldable,
                         onStartDailyQuest = {
                             viewModel.startDailyQuest()
                             onStartGame()
@@ -253,7 +261,7 @@ fun MainMenuScreen(
                         unlockedTrophiesCount = unlockedTrophiesCount,
                         activeThemeName = uiState.activeTheme.name,
                         compact = true,
-                        singleRow = true,
+                        singleRow = isLandscape && !isTabletOrFoldable,
                         onOpenAchievements = { viewModel.showAchievements(true) },
                         onOpenThemes = { viewModel.showThemeSelector(true) },
                         onOpenBackup = { viewModel.showLocalBackup(true) },
@@ -262,21 +270,20 @@ fun MainMenuScreen(
                 }
             }
         } else {
-            // Adaptive Portrait Layout - Intentionally scaled to fit 100% inside screen without scrolling
-            val isCompactScreen = screenHeight < 720.dp
+            // Adaptive Portrait Layout for All Samsung Phones - Dynamically scaled with smooth scrolling
+            val isCompactScreen = screenHeight < 920.dp
+            val phoneScrollState = rememberScrollState()
 
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .widthIn(max = 440.dp)
+                    .widthIn(max = 460.dp)
                     .align(Alignment.Center)
                     .windowInsetsPadding(if (uiState.isImmersiveModeEnabled) WindowInsets.displayCutout else WindowInsets.safeDrawing)
-                    .padding(
-                        horizontal = 16.dp,
-                        vertical = if (isCompactScreen) 6.dp else 10.dp
-                    ),
+                    .padding(horizontal = 14.dp)
+                    .verticalScroll(phoneScrollState),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceBetween
+                verticalArrangement = Arrangement.spacedBy(if (isCompactScreen) 6.dp else 8.dp)
             ) {
                 // Top Action & Branding Header
                 Column(
@@ -292,18 +299,16 @@ fun MainMenuScreen(
                         onToggleMusic = { viewModel.toggleMusic() }
                     )
 
-                    Spacer(modifier = Modifier.height(if (isCompactScreen) 0.dp else 2.dp))
-
                     ForgeHeroEmblem(
                         pulseGlow = pulseGlow,
-                        sizeDp = if (isCompactScreen) 54 else 64
+                        sizeDp = if (isCompactScreen) 48 else 58
                     )
 
-                    Spacer(modifier = Modifier.height(if (isCompactScreen) 4.dp else 6.dp))
+                    Spacer(modifier = Modifier.height(2.dp))
 
                     Text(
                         text = "TILE FORGE",
-                        fontSize = if (isCompactScreen) 22.sp else 26.sp,
+                        fontSize = if (isCompactScreen) 21.sp else 24.sp,
                         fontWeight = FontWeight.Black,
                         color = Color.White,
                         letterSpacing = 2.sp
@@ -311,13 +316,13 @@ fun MainMenuScreen(
 
                     Text(
                         text = "Slide • Merge • Gather Energy • Forge Relics",
-                        fontSize = if (isCompactScreen) 10.5.sp else 11.5.sp,
+                        fontSize = if (isCompactScreen) 10.sp else 11.sp,
                         fontWeight = FontWeight.Medium,
                         color = Color.White.copy(alpha = 0.65f),
                         textAlign = TextAlign.Center
                     )
 
-                    Spacer(modifier = Modifier.height(if (isCompactScreen) 4.dp else 6.dp))
+                    Spacer(modifier = Modifier.height(3.dp))
 
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -327,11 +332,11 @@ fun MainMenuScreen(
                         HighScorePill(highScore = highScore)
                     }
 
-                    Spacer(modifier = Modifier.height(if (isCompactScreen) 6.dp else 8.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
 
                     FantasyQuoteCard(
                         quote = currentQuote,
-                        compact = isCompactScreen,
+                        compact = true,
                         onRefreshQuote = { currentQuote = FantasyQuotes.getRandomQuote() }
                     )
                 }
@@ -344,7 +349,7 @@ fun MainMenuScreen(
                     MainMenuPlayModes(
                         unlockedLevelsCount = unlockedLevelsCount,
                         dailyQuestHighScore = gameStats?.dailyQuestHighScore ?: 0,
-                        compact = isCompactScreen,
+                        compact = true,
                         onStartDailyQuest = {
                             viewModel.startDailyQuest()
                             onStartGame()
@@ -361,12 +366,15 @@ fun MainMenuScreen(
                     MainMenuUtilityGrid(
                         unlockedTrophiesCount = unlockedTrophiesCount,
                         activeThemeName = uiState.activeTheme.name,
-                        compact = isCompactScreen,
+                        compact = true,
                         onOpenAchievements = { viewModel.showAchievements(true) },
                         onOpenThemes = { viewModel.showThemeSelector(true) },
                         onOpenBackup = { viewModel.showLocalBackup(true) },
                         onOpenCredits = { viewModel.showCredits(true) }
                     )
+
+                    // Safe padding at the bottom for Samsung gesture hint or 3-button navigation
+                    Spacer(modifier = Modifier.height(20.dp))
                 }
             }
         }
@@ -1093,12 +1101,12 @@ private fun UtilityGridItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val padV = if (singleRow) 6.dp else if (compact) 7.dp else 9.dp
-    val padH = if (singleRow) 6.dp else if (compact) 9.dp else 11.dp
+    val padV = if (singleRow) 5.dp else if (compact) 6.dp else 9.dp
+    val padH = if (singleRow) 6.dp else if (compact) 8.dp else 11.dp
     val iconSurfaceSize = if (singleRow) 24.dp else if (compact) 26.dp else 30.dp
     val iconSize = if (singleRow) 13.dp else if (compact) 14.dp else 16.dp
-    val titleSize = if (singleRow) 11.sp else if (compact) 12.sp else 13.sp
-    val subtitleSize = if (singleRow) 9.sp else if (compact) 9.5.sp else 10.5.sp
+    val titleSize = if (singleRow) 11.sp else if (compact) 11.5.sp else 13.sp
+    val subtitleSize = if (singleRow) 8.5.sp else if (compact) 9.sp else 10.5.sp
 
     Surface(
         shape = RoundedCornerShape(12.dp),

@@ -43,7 +43,9 @@ class GameRepository(private val gameDao: GameDao) {
                 AchievementEntity("ach_energy_500", "Power Collector", "Gather 500 Energy Crystals total", "crystal", false, 0, 500),
                 AchievementEntity("ach_combo_3", "Chain Reaction", "Trigger a 3x combo in a single slide", "fire", false, 0, 3),
                 AchievementEntity("ach_artifacts_10", "Relic Hunter", "Forge 10 Artifact tiles", "artifact", false, 0, 10),
-                AchievementEntity("ach_levels_5", "Challenge Conqueror", "Complete 5 Challenge levels", "star", false, 0, 5)
+                AchievementEntity("ach_levels_5", "Challenge Conqueror", "Complete 5 Challenge levels", "star", false, 0, 5),
+                AchievementEntity("ach_plus_ultra", "Go Beyond! PLUS ULTRA!", "Unleash a 4x combo or higher like All Might", "crown", false, 0, 4),
+                AchievementEntity("ach_one_for_all", "One For All: Full Cowling", "Gather 250 Energy Crystals to power your hero meter", "crystal", false, 0, 250)
             )
             gameDao.insertAchievements(defaultAchievements)
         }
@@ -128,6 +130,14 @@ class GameRepository(private val gameDao: GameDao) {
                 "ach_levels_5" -> {
                     newProgress = minOf(completedLevelsCount, 5)
                     if (newProgress >= 5) isUnlocked = true
+                }
+                "ach_plus_ultra" -> {
+                    newProgress = minOf(stats.maxComboChain, 4)
+                    if (newProgress >= 4) isUnlocked = true
+                }
+                "ach_one_for_all" -> {
+                    newProgress = minOf(stats.totalEnergyCollected, 250)
+                    if (newProgress >= 250) isUnlocked = true
                 }
             }
 

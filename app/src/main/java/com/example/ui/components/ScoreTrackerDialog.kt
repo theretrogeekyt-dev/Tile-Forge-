@@ -69,12 +69,12 @@ data class ForgeMasteryRank(
 
 fun getMasteryRank(score: Int): ForgeMasteryRank {
     return when {
-        score >= 25000 -> ForgeMasteryRank("Mythic Titan", 25000, 50000, Icons.Filled.MilitaryTech, Color(0xFFFFD700))
-        score >= 10000 -> ForgeMasteryRank("Arch-Forgemaster", 10000, 25000, Icons.Filled.Stars, Color(0xFFBA68C8))
-        score >= 4000 -> ForgeMasteryRank("Master Smith", 4000, 10000, Icons.Filled.LocalFireDepartment, Color(0xFFFF9100))
-        score >= 1500 -> ForgeMasteryRank("Artisan Craftsman", 1500, 4000, Icons.Filled.Star, Color(0xFF00E5FF))
-        score >= 500 -> ForgeMasteryRank("Journeyman Smelter", 500, 1500, Icons.Filled.Bolt, Color(0xFF64B5F6))
-        else -> ForgeMasteryRank("Apprentice Forger", 0, 500, Icons.Filled.AutoAwesome, Color(0xFFB0BEC5))
+        score >= 25000 -> ForgeMasteryRank("Symbol of Peace • Plus Ultra", 25000, 50000, Icons.Filled.MilitaryTech, Color(0xFFFFD700))
+        score >= 10000 -> ForgeMasteryRank("No. 1 Pro Hero • Arch-Forger", 10000, 25000, Icons.Filled.Stars, Color(0xFF00E676))
+        score >= 4000 -> ForgeMasteryRank("Class 1-A Hero Elite", 4000, 10000, Icons.Filled.LocalFireDepartment, Color(0xFFFF9100))
+        score >= 1500 -> ForgeMasteryRank("Full Cowling Artisan", 1500, 4000, Icons.Filled.Star, Color(0xFF00E5FF))
+        score >= 500 -> ForgeMasteryRank("U.A. Hero Trainee", 500, 1500, Icons.Filled.Bolt, Color(0xFF64B5F6))
+        else -> ForgeMasteryRank("Quirkless Apprentice Forger", 0, 500, Icons.Filled.AutoAwesome, Color(0xFFB0BEC5))
     }
 }
 
