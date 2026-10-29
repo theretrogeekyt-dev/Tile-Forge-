@@ -1,6 +1,16 @@
-# ⚒️ Tile Forge Changelog
+# ⚒️ Tile Crucible Changelog
 
-All notable changes to the **Tile Forge** game will be documented in this file.
+All notable changes to the **Tile Crucible** game will be documented in this file.
+
+---
+
+## [v10053.0] - 2026-10-29
+
+### 🏷️ Rebranded
+- **Game Renamed to Tile Crucible**:
+  - Rebranded from "Tile Forge" to **"Tile Crucible"** to resolve naming collisions on Google Play.
+  - Synchronized across `metadata.json`, Android `res/values/strings.xml` (`app_name`), `settings.gradle.kts`, `MainMenuScreen`, `HeaderBar`, screenshot/unit tests, and web companion.
+  - Retained all existing user saves, progression, level states, high scores, and SQLite Room database structure.
 
 ---
 

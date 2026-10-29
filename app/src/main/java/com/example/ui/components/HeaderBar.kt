@@ -196,7 +196,7 @@ fun HeaderBar(
 
                 Column {
                     Text(
-                        text = "TILE FORGE",
+                        text = "TILE CRUCIBLE",
                         fontSize = titleFontSize,
                         fontWeight = FontWeight.Black,
                         color = theme.primaryAccent,

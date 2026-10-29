@@ -22,6 +22,6 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "Tile Forge"
+rootProject.name = "Tile Crucible"
 
 include(":app")

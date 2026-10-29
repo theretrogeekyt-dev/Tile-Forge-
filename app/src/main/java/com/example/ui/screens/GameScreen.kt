@@ -441,7 +441,7 @@ fun GameScreen(
                 lastBackupTime = uiState.lastBackupTime,
                 isProcessing = uiState.isBackupProcessing,
                 statusMessage = uiState.backupMessage,
-                onExportZip = { exportZipLauncher.launch("TileForge_SaveBackup.zip") },
+                onExportZip = { exportZipLauncher.launch("TileCrucible_SaveBackup.zip") },
                 onImportZip = {
                     importZipLauncher.launch(
                         arrayOf(
@@ -457,8 +457,8 @@ fun GameScreen(
                         val shareIntent = Intent(Intent.ACTION_SEND).apply {
                             type = "application/zip"
                             putExtra(Intent.EXTRA_STREAM, uri)
-                            putExtra(Intent.EXTRA_SUBJECT, "TileForge Save Backup (.ZIP)")
-                            putExtra(Intent.EXTRA_TEXT, "Here is my TileForge game save backup (.zip).")
+                            putExtra(Intent.EXTRA_SUBJECT, "Tile Crucible Save Backup (.ZIP)")
+                            putExtra(Intent.EXTRA_TEXT, "Here is my Tile Crucible game save backup (.zip).")
                             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                         }
                         context.startActivity(Intent.createChooser(shareIntent, "Share Save File (.ZIP)"))

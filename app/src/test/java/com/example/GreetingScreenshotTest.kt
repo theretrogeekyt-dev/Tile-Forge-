@@ -29,7 +29,7 @@ class GreetingScreenshotTest {
     composeTestRule.setContent {
       MyApplicationTheme {
         Box(modifier = Modifier.padding(16.dp)) {
-          Text("Tile Forge: Immersive Fullscreen Mode")
+          Text("Tile Crucible: Immersive Fullscreen Mode")
         }
       }
     }

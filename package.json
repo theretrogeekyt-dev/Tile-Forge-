@@ -1,7 +1,7 @@
 {
-  "name": "tile-forge",
+  "name": "tile-crucible",
   "version": "1.0.0",
-  "description": "Tile Forge - Strategic sliding-tile puzzle game with energy, forging abilities, and authentic fantasy themes",
+  "description": "Tile Crucible - Strategic sliding-tile puzzle game with energy, forging abilities, and authentic fantasy themes",
   "main": "server.js",
   "scripts": {
     "dev": "node server.js",
