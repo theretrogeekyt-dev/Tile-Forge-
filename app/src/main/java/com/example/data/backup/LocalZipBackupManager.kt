@@ -59,6 +59,15 @@ class LocalZipBackupManager(private val context: Context) {
         statsObj.put("totalGamesPlayed", stats.totalGamesPlayed)
         statsObj.put("maxComboChain", stats.maxComboChain)
         statsObj.put("activeThemeId", stats.activeThemeId)
+        statsObj.put("playerLevel", stats.playerLevel)
+        statsObj.put("playerXp", stats.playerXp)
+        statsObj.put("goldCoins", stats.goldCoins)
+        statsObj.put("dailyStreak", stats.dailyStreak)
+        statsObj.put("lastDailyLoginDate", stats.lastDailyLoginDate)
+        statsObj.put("claimedDailyStreakDay", stats.claimedDailyStreakDay)
+        statsObj.put("claimedQuestsMask", stats.claimedQuestsMask)
+        statsObj.put("unlockedPerksMask", stats.unlockedPerksMask)
+        statsObj.put("equippedTitle", stats.equippedTitle)
         root.put("stats", statsObj)
 
         // Levels
@@ -106,7 +115,16 @@ class LocalZipBackupManager(private val context: Context) {
                 totalArtifactsForged = statsObj.optInt("totalArtifactsForged", 0),
                 totalGamesPlayed = statsObj.optInt("totalGamesPlayed", 0),
                 maxComboChain = statsObj.optInt("maxComboChain", 0),
-                activeThemeId = statsObj.optString("activeThemeId", "classic_obsidian")
+                activeThemeId = statsObj.optString("activeThemeId", "classic_obsidian"),
+                playerLevel = statsObj.optInt("playerLevel", 1),
+                playerXp = statsObj.optInt("playerXp", 0),
+                goldCoins = statsObj.optInt("goldCoins", 250),
+                dailyStreak = statsObj.optInt("dailyStreak", 1),
+                lastDailyLoginDate = statsObj.optString("lastDailyLoginDate", ""),
+                claimedDailyStreakDay = statsObj.optInt("claimedDailyStreakDay", 0),
+                claimedQuestsMask = statsObj.optInt("claimedQuestsMask", 0),
+                unlockedPerksMask = statsObj.optInt("unlockedPerksMask", 0),
+                equippedTitle = statsObj.optString("equippedTitle", "Apprentice Blacksmith")
             )
 
             val levelsList = mutableListOf<LevelProgressEntity>()

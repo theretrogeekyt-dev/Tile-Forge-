@@ -19,6 +19,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.displayCutout
@@ -53,8 +55,13 @@ import com.example.ui.components.ObjectiveCard
 import com.example.ui.components.PowerUpActionBar
 import com.example.ui.components.ScoreTrackerDialog
 import com.example.ui.components.ThemeSelectorDialog
+import com.example.ui.components.VictoryStageClearDialog
 import com.example.ui.viewmodel.GameViewModel
 import com.example.ui.viewmodel.PowerAbilityType
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material3.Icon
+import androidx.compose.ui.graphics.Brush
 import kotlinx.coroutines.delay
 
 @Composable
@@ -274,6 +281,38 @@ fun GameScreen(
                         theme = uiState.activeTheme,
                         onUndo = { viewModel.handleUndo() }
                     )
+
+                    // Fever Combo Banner
+                    if (uiState.comboStreak >= 2) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp)
+                                .background(
+                                    if (uiState.comboStreak >= 4) Brush.horizontalGradient(listOf(Color(0xFF00E676), Color(0xFFFFD700), Color(0xFFFF1744)))
+                                    else Brush.horizontalGradient(listOf(Color(0xFFFF6D00), Color(0xFFFFD700))),
+                                    RoundedCornerShape(8.dp)
+                                )
+                                .padding(horizontal = 10.dp, vertical = 3.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.LocalFireDepartment,
+                                contentDescription = null,
+                                tint = if (uiState.comboStreak >= 4) Color.Black else Color.White,
+                                modifier = Modifier.size(15.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = if (uiState.comboStreak >= 4) "🔥 PLUS ULTRA FEVER! ${uiState.comboStreak}x COMBO (2x PTS)" else "🔥 ${uiState.comboStreak}x COMBO STREAK!",
+                                color = if (uiState.comboStreak >= 4) Color.Black else Color.White,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Black,
+                                letterSpacing = 0.5.sp
+                            )
+                        }
+                    }
                 }
 
                 // Game Board
@@ -431,12 +470,31 @@ fun GameScreen(
             )
         }
 
-        if (uiState.isGameOver || uiState.isLevelWon) {
-            val isVictory = uiState.isLevelWon || (uiState.gameMode == GameModeType.CHALLENGE &&
-                    uiState.levelGoal != null &&
-                    (uiState.levelGoal!!.targetTileValue == 0 || uiState.highestTile >= uiState.levelGoal!!.targetTileValue) &&
-                    uiState.score >= uiState.levelGoal!!.targetScore)
-
+        if (uiState.showVictoryDialog && uiState.levelGoal != null) {
+            VictoryStageClearDialog(
+                goal = uiState.levelGoal!!,
+                starsEarned = uiState.wonStars,
+                finalScore = uiState.score,
+                movesTaken = uiState.moves,
+                goldEarned = uiState.wonGold,
+                xpEarned = uiState.wonXp,
+                hasNextLevel = uiState.currentLevelId < 15,
+                theme = uiState.activeTheme,
+                onNextLevel = {
+                    viewModel.dismissVictoryDialog()
+                    viewModel.startNextChallengeStage()
+                },
+                onReplay = {
+                    viewModel.dismissVictoryDialog()
+                    viewModel.restartCurrentGame()
+                },
+                onReturnToMenu = {
+                    viewModel.dismissVictoryDialog()
+                    onNavigateBack()
+                }
+            )
+        } else if (uiState.isGameOver) {
+            val isVictory = false
             GameOverDialog(
                 isVictory = isVictory,
                 score = uiState.score,
@@ -449,9 +507,7 @@ fun GameScreen(
                     viewModel.dismissGameOver()
                 },
                 onRestart = { viewModel.restartCurrentGame() },
-                onNextLevel = if (isVictory && uiState.currentLevelId < 15) {
-                    { viewModel.startNewGame(GameModeType.CHALLENGE, uiState.currentLevelId + 1) }
-                } else null,
+                onNextLevel = null,
                 onBackToMenu = onNavigateBack,
                 onDismiss = { viewModel.dismissGameOver() }
             )

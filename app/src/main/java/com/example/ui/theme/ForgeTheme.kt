@@ -13,7 +13,12 @@ data class ForgeThemeStyle(
     val secondaryAccent: Color,
     val tileColors: Map<Int, Color>,
     val specialTileColors: Map<String, Color>
-)
+) {
+    val primaryColor: Color get() = primaryAccent
+    val accentColor: Color get() = secondaryAccent
+    val surfaceColor: Color get() = gridBgColor
+    val borderColor: Color get() = gridCellBgColor
+}
 
 object ForgeThemes {
 

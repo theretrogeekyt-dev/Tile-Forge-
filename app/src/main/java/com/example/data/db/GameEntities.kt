@@ -14,7 +14,16 @@ data class GameStatsEntity(
     val totalArtifactsForged: Int = 0,
     val totalGamesPlayed: Int = 0,
     val maxComboChain: Int = 0,
-    val activeThemeId: String = "classic_obsidian"
+    val activeThemeId: String = "classic_obsidian",
+    val playerLevel: Int = 1,
+    val playerXp: Int = 0,
+    val goldCoins: Int = 250,
+    val dailyStreak: Int = 1,
+    val lastDailyLoginDate: String = "",
+    val claimedDailyStreakDay: Int = 0,
+    val claimedQuestsMask: Int = 0,
+    val unlockedPerksMask: Int = 0,
+    val equippedTitle: String = "Apprentice Blacksmith"
 )
 
 @Entity(tableName = "level_progress")

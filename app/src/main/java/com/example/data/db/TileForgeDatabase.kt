@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 
 @Database(
     entities = [GameStatsEntity::class, LevelProgressEntity::class, AchievementEntity::class],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class TileForgeDatabase : RoomDatabase() {

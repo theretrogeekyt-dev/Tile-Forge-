@@ -81,6 +81,42 @@ class AudioEngine {
         }
     }
 
+    fun playLevelWinSound() {
+        if (!soundFxEnabled) return
+        scope.launch {
+            generateChimeChord(listOf(523.25, 659.25, 783.99, 1046.50, 1318.51), durationMs = 450)
+        }
+    }
+
+    fun playStarSound(starIndex: Int) {
+        if (!soundFxEnabled) return
+        scope.launch {
+            val base = 659.25 * (1.0 + starIndex * 0.25)
+            generateChimeChord(listOf(base, base * 1.5), durationMs = 180)
+        }
+    }
+
+    fun playCoinSound() {
+        if (!soundFxEnabled) return
+        scope.launch {
+            generateToneSweep(startFreq = 987.77, endFreq = 1318.51, durationMs = 90)
+        }
+    }
+
+    fun playFeverSound() {
+        if (!soundFxEnabled) return
+        scope.launch {
+            generateChimeChord(listOf(440.0, 554.37, 659.25, 880.0, 1108.73), durationMs = 350)
+        }
+    }
+
+    fun playPerkUnlockSound() {
+        if (!soundFxEnabled) return
+        scope.launch {
+            generateChimeChord(listOf(587.33, 739.99, 880.0, 1174.66), durationMs = 320)
+        }
+    }
+
     private fun generateToneSweep(startFreq: Double, endFreq: Double, durationMs: Int) {
         try {
             val numSamples = (sampleRate * durationMs) / 1000

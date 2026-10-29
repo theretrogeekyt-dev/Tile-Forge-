@@ -166,6 +166,77 @@ class GameRepository(private val gameDao: GameDao) {
     suspend fun getAllLevelProgressDirect(): List<LevelProgressEntity> = gameDao.getAllLevelProgressDirect()
     suspend fun getAllAchievementsDirect(): List<AchievementEntity> = gameDao.getAllAchievementsDirect()
 
+    suspend fun addExperienceAndCoins(xpToAdd: Int, coinsToAdd: Int): Pair<Int, Boolean> {
+        val currentStats = gameDao.getGameStatsDirect() ?: GameStatsEntity()
+        var currentLevel = currentStats.playerLevel
+        var currentXp = currentStats.playerXp + xpToAdd
+        var leveledUp = false
+
+        while (true) {
+            val xpNeeded = currentLevel * 150
+            if (currentXp >= xpNeeded && currentLevel < 50) {
+                currentXp -= xpNeeded
+                currentLevel += 1
+                leveledUp = true
+            } else {
+                break
+            }
+        }
+
+        val bonusCoins = if (leveledUp) 100 else 0
+        val updated = currentStats.copy(
+            playerLevel = currentLevel,
+            playerXp = currentXp,
+            goldCoins = currentStats.goldCoins + coinsToAdd + bonusCoins
+        )
+        gameDao.insertOrUpdateGameStats(updated)
+        return Pair(currentLevel, leveledUp)
+    }
+
+    suspend fun claimDailyStreak(day: Int, coinReward: Int, energyReward: Int): Boolean {
+        val currentStats = gameDao.getGameStatsDirect() ?: GameStatsEntity()
+        if (currentStats.claimedDailyStreakDay >= day) return false
+        val updated = currentStats.copy(
+            claimedDailyStreakDay = day,
+            goldCoins = currentStats.goldCoins + coinReward,
+            totalEnergyCollected = currentStats.totalEnergyCollected + energyReward
+        )
+        gameDao.insertOrUpdateGameStats(updated)
+        return true
+    }
+
+    suspend fun claimDailyQuest(questBit: Int, coinReward: Int, xpReward: Int): Boolean {
+        val currentStats = gameDao.getGameStatsDirect() ?: GameStatsEntity()
+        if ((currentStats.claimedQuestsMask and questBit) != 0) return false
+        val newMask = currentStats.claimedQuestsMask or questBit
+        val updated = currentStats.copy(
+            claimedQuestsMask = newMask,
+            goldCoins = currentStats.goldCoins + coinReward
+        )
+        gameDao.insertOrUpdateGameStats(updated)
+        addExperienceAndCoins(xpReward, 0)
+        return true
+    }
+
+    suspend fun purchasePerk(perkBit: Int, costGold: Int): Boolean {
+        val currentStats = gameDao.getGameStatsDirect() ?: GameStatsEntity()
+        if ((currentStats.unlockedPerksMask and perkBit) != 0) return false
+        if (currentStats.goldCoins < costGold) return false
+
+        val updated = currentStats.copy(
+            goldCoins = currentStats.goldCoins - costGold,
+            unlockedPerksMask = currentStats.unlockedPerksMask or perkBit
+        )
+        gameDao.insertOrUpdateGameStats(updated)
+        return true
+    }
+
+    suspend fun equipTitle(title: String) {
+        val currentStats = gameDao.getGameStatsDirect() ?: GameStatsEntity()
+        val updated = currentStats.copy(equippedTitle = title)
+        gameDao.insertOrUpdateGameStats(updated)
+    }
+
     suspend fun restoreBackup(payload: TileForgeBackupPayload) {
         gameDao.insertOrUpdateGameStats(payload.gameStats)
         if (payload.levelProgress.isNotEmpty()) {

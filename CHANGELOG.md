@@ -4,6 +4,68 @@ All notable changes to the **Tile Forge** game will be documented in this file.
 
 ---
 
+## [v10052.0] - 2026-10-29
+
+### 🚀 Release
+- **Post-Publishing Version Bump**:
+  - Incremented `versionCode` to `10052` and updated `versionName` to `"10052.0"`.
+  - Prepared release build targets for subsequent Google Play production updates.
+
+---
+
+## [v10051.0] - 2026-10-29
+
+### ✨ Added
+- **Re-Added Quotes to Main Menu Screen**:
+  - Re-integrated the "Words of the Forge" quote card into `MainMenuScreen`.
+  - Displays inspirational quotes from fantasy and anime lore (Lord of the Rings, Harry Potter, My Hero Academia, etc.) along with speaker and source.
+  - Added dedicated refresh button (`testTag("refresh_quote_btn")`) to shuffle and discover new quotes with a tap.
+  - Added smooth vertical scrolling to ensure all quotes, action cards, and utilities fit comfortably on any screen size.
+
+---
+
+## [v10050.0] - 2026-10-29
+
+### 🎮 Re-Added Home Screen
+- **Re-Added Game Home Screen (Main Menu)**:
+  - Re-enabled `MainMenuScreen` as the opening landing screen on app launch.
+  - Reconnected game navigation: tapping **Play Forge**, **Challenge Stages**, or **Daily Quest** transitions seamlessly into the gameplay screen.
+  - Restored header back button in `HeaderBar` to smoothly return from active gameplay back to the Home Screen.
+  - Preserved quick-access utility controls (Trophies, Themes, Tutorial, Backup, and Credits) and top-bar audio/fullscreen toggles.
+
+---
+
+## [v10049.0] - 2026-10-29
+
+### 🔄 Restored
+- **Restored Original Direct Game Board Layout**:
+  - Returned app startup screen directly to the original `GameScreen` board layout, eliminating the separate menu screen.
+  - Placed the player immediately into the 4x4 sliding-tile puzzle on launch, matching the web companion and original game architecture.
+  - Updated the header bar with the glowing Forge emblem to quickly access game modes and challenge levels without a separate menu screen.
+  - Set default Android back navigation to dismiss active dialogs or minimize the app cleanly.
+
+---
+
+## [v10048.0] - 2026-10-29
+
+### 🔄 Reverted & Streamlined
+- **Reverted Heavy Menu Structure to Clean Classic Game Menu**:
+  - Removed bloated multi-card layout, oversized quote card banner, and 2x2 utility widget grid that cluttered the screen and forced vertical scrolling.
+  - Restored a classic, punchy arcade game start menu with a radiant glowing Forge emblem, high score pill, and bold primary action buttons (**PLAY FORGE**, **CHALLENGE STAGES**, and **DAILY QUEST**).
+  - Streamlined utility navigation (Trophies, Themes, Tutorial, Backup, and Credits) into an elegant, non-intrusive bottom toolbar.
+  - Optimized viewport density so all menu controls fit on any screen without scrolling or awkward multi-column splits.
+
+---
+
+## [v10047.0] - 2026-10-28
+
+### 🚀 Release
+- **Post-Publishing Version Bump**:
+  - Incremented `versionCode` to `10047` and `versionName` to `"10047.0"`.
+  - Prepared release manifest and build targets for subsequent Google Play production updates.
+
+---
+
 ## [v10046.0] - 2026-10-28
 
 ### 🛠️ Fixed & Optimized

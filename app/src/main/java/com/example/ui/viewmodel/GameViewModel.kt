@@ -76,7 +76,13 @@ data class GameUiState(
     val totalMergesInSession: Int = 0,
     val highestSingleMoveScore: Int = 0,
     val totalScoreFromCombos: Int = 0,
-    val isNewHighScoreAchieved: Boolean = false
+    val isNewHighScoreAchieved: Boolean = false,
+    val wonStars: Int = 0,
+    val wonGold: Int = 0,
+    val wonXp: Int = 0,
+    val showVictoryDialog: Boolean = false,
+    val isFeverMode: Boolean = false,
+    val activeHubTab: Int = 0
 )
 
 class GameViewModel(application: Application) : AndroidViewModel(application) {
@@ -153,11 +159,20 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             GameModeType.ENDLESS -> null
         }
 
+        val perks = gameStats.value?.unlockedPerksMask ?: 0
+        val hasIronWill = (perks and 2) != 0
+        val hasKeenEye = (perks and 1) != 0
+        val startingHearts = if (hasIronWill) 4 else 3
+
         if (mode == GameModeType.DAILY_QUEST) {
             val seed = dateKey.toLongOrNull() ?: 20260828L
-            gameBoard.resetBoard(seed = seed, isDailyQuest = true)
+            gameBoard.resetBoard(seed = seed, isDailyQuest = true, startingHearts = startingHearts, keenEyePerk = hasKeenEye)
         } else {
-            gameBoard.resetBoard(initialObstacles = goal?.initialObstacles ?: 0)
+            gameBoard.resetBoard(
+                initialObstacles = goal?.initialObstacles ?: 0,
+                startingHearts = startingHearts,
+                keenEyePerk = hasKeenEye
+            )
         }
 
         lastSavedSessionEnergy = 0
@@ -175,6 +190,11 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             maxHearts = gameBoard.maxHearts,
             isGameOver = false,
             isLevelWon = false,
+            showVictoryDialog = false,
+            wonStars = 0,
+            wonGold = 0,
+            wonXp = 0,
+            isFeverMode = false,
             activePowerAbility = PowerAbilityType.NONE,
             hasAegisShield = false,
             midasTurnsLeft = 0,
@@ -216,26 +236,32 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val result = gameBoard.slide(direction)
         if (result.moved) {
             audioEngine.playSlideSound()
-
             if (result.mergesCount > 0) {
                 audioEngine.playMergeSound(gameBoard.highestTileValue)
+                if (result.comboCount >= 3) {
+                    audioEngine.playFeverSound()
+                    com.example.game.HapticHelper.vibrateHeavy(getApplication())
+                } else {
+                    com.example.game.HapticHelper.vibrateMedium(getApplication())
+                }
+            } else {
+                com.example.game.HapticHelper.vibrateLight(getApplication())
             }
 
             if (result.energyGained > 0) {
                 audioEngine.playEnergySound()
             }
-
             if (result.artifactForged != null) {
                 audioEngine.playForgeSound()
                 showNotification("Forged Artifact: ${result.artifactForged.displayName}!")
             }
-
             if (result.heartLost) {
+                com.example.game.HapticHelper.vibrateHeavy(getApplication())
                 if (result.wasRescued) {
                     audioEngine.playHeartLostSound()
                     audioEngine.playHeartRescueSound()
                     _uiState.value = _uiState.value.copy(heartDamageTrigger = System.currentTimeMillis())
-                    showNotification("💔 Heart Lost! Forge Rescued (${result.heartsRemaining}/3 Hearts Left)")
+                    showNotification("💔 Heart Lost! Forge Rescued (${result.heartsRemaining}/${gameBoard.maxHearts} Hearts Left)")
                 } else {
                     audioEngine.playGameOverSound()
                     _uiState.value = _uiState.value.copy(heartDamageTrigger = System.currentTimeMillis())
@@ -245,11 +271,13 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
             val currentHighScore = gameStats.value?.highScore ?: 0
             val isNowNewHigh = currentHighScore > 0 && gameBoard.score > currentHighScore
+            val isFever = result.comboCount >= 3
 
             _uiState.value = _uiState.value.copy(
                 lastScoreGained = result.scoreGained,
                 lastScoreGainTimestamp = System.currentTimeMillis(),
                 comboStreak = result.comboCount,
+                isFeverMode = isFever,
                 maxComboInSession = maxOf(_uiState.value.maxComboInSession, result.comboCount),
                 totalMergesInSession = gameBoard.totalMergesSession,
                 highestSingleMoveScore = gameBoard.highestSingleMoveScore,
@@ -266,7 +294,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private fun checkLevelProgressAndWinCondition() {
         val state = _uiState.value
         val goal = state.levelGoal ?: return
-
         if (state.gameMode != GameModeType.CHALLENGE) return
 
         val scoreWon = gameBoard.score >= goal.targetScore
@@ -275,17 +302,29 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val artifactsWon = goal.targetArtifactsForged == 0 || gameBoard.artifactsForgedCount >= goal.targetArtifactsForged
 
         if (scoreWon && tileWon && energyWon && artifactsWon) {
-            _uiState.value = _uiState.value.copy(isLevelWon = true, activePowerAbility = PowerAbilityType.NONE)
-            audioEngine.playForgeSound()
-            showNotification("Level ${state.currentLevelId} Completed!")
+            val stars = when {
+                goal.maxMoves > 0 && gameBoard.moves <= goal.maxMoves - 5 -> 3
+                goal.maxMoves > 0 && gameBoard.moves <= goal.maxMoves -> 2
+                else -> 1
+            }
+            val goldReward = goal.goldReward
+            val xpReward = goal.xpReward
+
+            _uiState.value = _uiState.value.copy(
+                isLevelWon = true,
+                showVictoryDialog = true,
+                wonStars = stars,
+                wonGold = goldReward,
+                wonXp = xpReward,
+                activePowerAbility = PowerAbilityType.NONE
+            )
+            audioEngine.playLevelWinSound()
+            com.example.game.HapticHelper.vibrateVictory(getApplication())
+            showNotification("Stage ${state.currentLevelId} Cleared! +$goldReward🪙 +$xpReward XP")
 
             viewModelScope.launch {
-                val stars = when {
-                    gameBoard.moves <= goal.maxMoves - 5 -> 3
-                    gameBoard.moves <= goal.maxMoves -> 2
-                    else -> 1
-                }
                 repository.updateLevelProgress(state.currentLevelId, stars, gameBoard.score)
+                repository.addExperienceAndCoins(xpReward, goldReward)
             }
         } else if (goal.maxMoves > 0 && gameBoard.moves >= goal.maxMoves && !gameBoard.canUndo()) {
             _uiState.value = _uiState.value.copy(isGameOver = true)
@@ -506,6 +545,14 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         )
     }
 
+    fun openScoreTracker() = showScoreTracker(true)
+    fun dismissScoreTracker() = showScoreTracker(false)
+    fun openAchievements() = showAchievements(true)
+    fun dismissAchievements() = showAchievements(false)
+    fun openBackupDialog() = showLocalBackup(true)
+    fun dismissBackupDialog() = showLocalBackup(false)
+    fun dismissCredits() = showCredits(false)
+
     fun exportZipBackup(uri: android.net.Uri) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(
@@ -652,6 +699,67 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     backupMessage = "❌ " + (result.exceptionOrNull()?.message ?: "No quick backup found.")
                 )
             }
+        }
+    }
+
+    fun startNextChallengeStage() {
+        val nextLevelId = _uiState.value.currentLevelId + 1
+        if (nextLevelId <= 15) {
+            startNewGame(GameModeType.CHALLENGE, nextLevelId)
+        } else {
+            startNewGame(GameModeType.CHALLENGE, 1)
+        }
+    }
+
+    fun dismissVictoryDialog() {
+        _uiState.value = _uiState.value.copy(showVictoryDialog = false)
+    }
+
+    fun setActiveHubTab(tab: Int) {
+        _uiState.value = _uiState.value.copy(activeHubTab = tab)
+    }
+
+    fun claimDailyStreakReward(day: Int, coins: Int, energy: Int) {
+        viewModelScope.launch {
+            val success = repository.claimDailyStreak(day, coins, energy)
+            if (success) {
+                audioEngine.playCoinSound()
+                com.example.game.HapticHelper.vibrateMedium(getApplication())
+                showNotification("Claimed Day $day Streak Reward! +$coins🪙")
+            }
+        }
+    }
+
+    fun claimDailyQuestReward(questBit: Int, coins: Int, xp: Int) {
+        viewModelScope.launch {
+            val success = repository.claimDailyQuest(questBit, coins, xp)
+            if (success) {
+                audioEngine.playCoinSound()
+                com.example.game.HapticHelper.vibrateMedium(getApplication())
+                showNotification("Quest Bounty Claimed! +$coins🪙 +$xp XP")
+            }
+        }
+    }
+
+    fun purchasePerk(perkBit: Int, costGold: Int) {
+        viewModelScope.launch {
+            val success = repository.purchasePerk(perkBit, costGold)
+            if (success) {
+                audioEngine.playPerkUnlockSound()
+                com.example.game.HapticHelper.vibrateVictory(getApplication())
+                showNotification("Perk Mastery Unlocked!")
+            } else {
+                showNotification("Not enough gold coins!")
+            }
+        }
+    }
+
+    fun equipHeroTitle(title: String) {
+        viewModelScope.launch {
+            repository.equipTitle(title)
+            audioEngine.playCoinSound()
+            com.example.game.HapticHelper.vibrateLight(getApplication())
+            showNotification("Title Equipped: $title")
         }
     }
 

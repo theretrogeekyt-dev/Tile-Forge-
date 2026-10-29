@@ -39,7 +39,8 @@ class GameBoard {
 
     var hearts: Int = 3
         private set
-    val maxHearts: Int = 3
+    var maxHearts: Int = 3
+        private set
 
     var totalMergesSession: Int = 0
         private set
@@ -100,7 +101,14 @@ class GameBoard {
         energy = maxOf(0, energy + amount)
     }
 
-    fun resetBoard(initialObstacles: Int = 0, seed: Long? = null, isDailyQuest: Boolean = false) {
+    fun resetBoard(
+        initialObstacles: Int = 0,
+        seed: Long? = null,
+        isDailyQuest: Boolean = false,
+        startingHearts: Int = 3,
+        keenEyePerk: Boolean = false
+    ) {
+        keenEyeActive = keenEyePerk
         grid = Array(size) { arrayOfNulls<Tile>(size) }
         score = 0
         energy = 0
@@ -115,6 +123,7 @@ class GameBoard {
         isGameOver = false
         hasAegisShield = false
         midasTurnsLeft = 0
+        maxHearts = startingHearts
         hearts = maxHearts
         undoHistory.clear()
 
@@ -615,6 +624,8 @@ class GameBoard {
         return null
     }
 
+    var keenEyeActive: Boolean = false
+
     fun spawnRandomTile(): Boolean {
         val emptySlots = mutableListOf<Pair<Int, Int>>()
         for (r in 0 until size) {
@@ -631,7 +642,15 @@ class GameBoard {
         val roll = rng.nextFloat()
 
         val tileToSpawn = when {
-            roll < 0.60f -> Tile(value = if (rng.nextFloat() < 0.85f) 2 else 4, isNew = true, row = slot.first, col = slot.second)
+            roll < 0.60f -> {
+                val valRoll = rng.nextFloat()
+                val tileVal = when {
+                    keenEyeActive && valRoll < 0.20f -> 8
+                    valRoll < (if (keenEyeActive) 0.55f else 0.85f) -> 2
+                    else -> 4
+                }
+                Tile(value = tileVal, isNew = true, row = slot.first, col = slot.second)
+            }
             roll < 0.75f -> Tile(type = TileType.ENERGY_CRYSTAL, energyBonus = listOf(10, 20, 30)[rng.nextInt(3)], isNew = true, row = slot.first, col = slot.second)
             roll < 0.85f -> Tile(type = TileType.FORGE_ANVIL, isNew = true, row = slot.first, col = slot.second)
             roll < 0.93f -> Tile(type = TileType.FORGE_FLAME, value = 8, isNew = true, row = slot.first, col = slot.second)

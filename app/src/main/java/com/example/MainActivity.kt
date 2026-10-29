@@ -111,8 +111,13 @@ fun TileForgeApp(activity: ComponentActivity) {
                 GameScreen(
                     viewModel = gameViewModel,
                     onNavigateBack = {
-                        gameViewModel.dismissAllDialogs()
-                        currentScreen = "main_menu"
+                        if (uiState.showCreditsDialog || uiState.showAchievementsDialog ||
+                            uiState.showThemeDialog || uiState.showLevelSelectDialog ||
+                            uiState.showBackupDialog || uiState.showScoreTrackerDialog) {
+                            gameViewModel.dismissAllDialogs()
+                        } else {
+                            currentScreen = "main_menu"
+                        }
                     },
                     onOpenTutorial = { currentScreen = "tutorial" },
                     modifier = Modifier.fillMaxSize()

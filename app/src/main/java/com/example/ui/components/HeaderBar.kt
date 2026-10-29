@@ -186,7 +186,7 @@ fun HeaderBar(
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back to Main Menu",
+                        contentDescription = "Back to Home Screen",
                         tint = Color.White,
                         modifier = Modifier.size(backIconSize)
                     )

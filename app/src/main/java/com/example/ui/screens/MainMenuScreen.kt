@@ -16,11 +16,9 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -38,8 +36,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.AllInclusive
-import androidx.compose.material.icons.filled.Bolt
+import androidx.compose.material.icons.automirrored.filled.VolumeOff
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.FolderZip
@@ -51,16 +50,11 @@ import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.MusicOff
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.School
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.FormatQuote
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.VolumeOff
-import androidx.compose.material.icons.filled.VolumeUp
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -73,7 +67,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -94,6 +87,11 @@ import com.example.ui.components.LocalBackupDialog
 import com.example.ui.components.ThemeSelectorDialog
 import com.example.ui.viewmodel.GameViewModel
 
+/**
+ * Main Menu / Home Screen for Tile Forge.
+ * Features glowing emblem, high score, authentic inspirational quotes,
+ * bold game mode cards, and bottom utility toolbar.
+ */
 @Composable
 fun MainMenuScreen(
     viewModel: GameViewModel,
@@ -109,7 +107,8 @@ fun MainMenuScreen(
 
     val highScore = gameStats?.highScore ?: 0
     val unlockedLevelsCount = levelProgressList.count { it.starsEarned > 0 }
-    val unlockedTrophiesCount = achievements.count { it.isUnlocked }
+
+    var currentQuote by remember { mutableStateOf(FantasyQuotes.getRandomQuote()) }
 
     val exportZipLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/zip")
@@ -137,18 +136,16 @@ fun MainMenuScreen(
     // Subtle pulsing animation for hero glow
     val infiniteTransition = rememberInfiniteTransition(label = "menuGlow")
     val pulseGlow by infiniteTransition.animateFloat(
-        initialValue = 0.85f,
+        initialValue = 0.90f,
         targetValue = 1.08f,
         animationSpec = infiniteRepeatable(
-            animation = tween(2200, easing = FastOutSlowInEasing),
+            animation = tween(2000, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "pulseGlow"
     )
 
-    var currentQuote by remember { mutableStateOf(FantasyQuotes.getRandomQuote()) }
-
-    BoxWithConstraints(
+    Box(
         modifier = modifier
             .fillMaxSize()
             .background(
@@ -160,222 +157,507 @@ fun MainMenuScreen(
                     )
                 )
             )
+            .windowInsetsPadding(if (uiState.isImmersiveModeEnabled) WindowInsets.displayCutout else WindowInsets.safeDrawing)
     ) {
-        val screenWidth = maxWidth
-        val screenHeight = maxHeight
-        val isLandscape = screenWidth > screenHeight
-        val isTabletOrFoldable = screenWidth >= 600.dp
-        val useTwoPaneLayout = isLandscape || isTabletOrFoldable
+        val scrollState = rememberScrollState()
 
-        if (useTwoPaneLayout) {
-            // Adaptive Landscape & Tablet Two-Pane Layout (Clean, balanced 2-column layout that fits 100% on tablets and landscape screens)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .widthIn(max = 440.dp)
+                .align(Alignment.Center)
+                .padding(horizontal = 16.dp, vertical = 10.dp)
+                .verticalScroll(scrollState),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            // Top Controls Bar (Clean Sound, Music, Immersive Toggles)
             Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .widthIn(max = 1040.dp)
-                    .align(Alignment.Center)
-                    .windowInsetsPadding(if (uiState.isImmersiveModeEnabled) WindowInsets.displayCutout else WindowInsets.safeDrawing)
-                    .padding(horizontal = if (screenWidth >= 800.dp) 32.dp else 20.dp, vertical = 10.dp),
-                horizontalArrangement = Arrangement.spacedBy(if (screenWidth >= 800.dp) 28.dp else 18.dp),
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Left Column: Brand, Status, Quick Bar & Lore Highlight
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight()
-                        .verticalScroll(rememberScrollState()),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.SpaceBetween
-                ) {
-                    MainMenuTopQuickBar(
-                        isImmersiveMode = uiState.isImmersiveModeEnabled,
-                        soundFxEnabled = uiState.soundFxEnabled,
-                        musicEnabled = uiState.musicEnabled,
-                        onToggleImmersive = { viewModel.toggleImmersiveMode() },
-                        onToggleSound = { viewModel.toggleSoundFx() },
-                        onToggleMusic = { viewModel.toggleMusic() }
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color(0xFF1B1428),
+                    modifier = Modifier.border(
+                        1.dp,
+                        Color.White.copy(alpha = 0.12f),
+                        RoundedCornerShape(12.dp)
                     )
-
+                ) {
                     Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp)
+                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
+                        horizontalArrangement = Arrangement.spacedBy(2.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        ForgeHeroEmblem(pulseGlow = pulseGlow, sizeDp = if (isTabletOrFoldable) 56 else 48)
-                        Spacer(modifier = Modifier.width(14.dp))
-                        Column {
-                            Text(
-                                text = "TILE FORGE",
-                                fontSize = if (isTabletOrFoldable) 25.sp else 22.sp,
-                                fontWeight = FontWeight.Black,
-                                color = Color.White,
-                                letterSpacing = 2.sp
+                        IconButton(
+                            onClick = { viewModel.toggleImmersiveMode() },
+                            modifier = Modifier
+                                .size(36.dp)
+                                .testTag("main_immersive_toggle_btn")
+                        ) {
+                            Icon(
+                                imageVector = if (uiState.isImmersiveModeEnabled) Icons.Filled.FullscreenExit else Icons.Filled.Fullscreen,
+                                contentDescription = if (uiState.isImmersiveModeEnabled) "Exit Fullscreen" else "Immersive Fullscreen",
+                                tint = if (uiState.isImmersiveModeEnabled) Color(0xFF00E5FF) else Color.White.copy(alpha = 0.7f),
+                                modifier = Modifier.size(20.dp)
                             )
-                            Text(
-                                text = "Slide • Merge • Forge Relics",
-                                fontSize = if (isTabletOrFoldable) 11.5.sp else 10.5.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = Color.White.copy(alpha = 0.65f)
+                        }
+
+                        IconButton(
+                            onClick = { viewModel.toggleSoundFx() },
+                            modifier = Modifier
+                                .size(36.dp)
+                                .testTag("main_sound_toggle_btn")
+                        ) {
+                            Icon(
+                                imageVector = if (uiState.soundFxEnabled) Icons.AutoMirrored.Filled.VolumeUp else Icons.AutoMirrored.Filled.VolumeOff,
+                                contentDescription = "Toggle Sound",
+                                tint = if (uiState.soundFxEnabled) Color(0xFF80D8FF) else Color.Gray,
+                                modifier = Modifier.size(20.dp)
                             )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            HighScorePill(highScore = highScore)
+                        }
+
+                        IconButton(
+                            onClick = { viewModel.toggleMusic() },
+                            modifier = Modifier
+                                .size(36.dp)
+                                .testTag("main_music_toggle_btn")
+                        ) {
+                            Icon(
+                                imageVector = if (uiState.musicEnabled) Icons.Filled.MusicNote else Icons.Filled.MusicOff,
+                                contentDescription = "Toggle Music",
+                                tint = if (uiState.musicEnabled) Color(0xFFFF80AB) else Color.Gray,
+                                modifier = Modifier.size(20.dp)
+                            )
                         }
                     }
-
-                    FantasyQuoteCard(
-                        quote = currentQuote,
-                        compact = true,
-                        onRefreshQuote = { currentQuote = FantasyQuotes.getRandomQuote() }
-                    )
-                }
-
-                // Right Column: Play Modes & Utility Bar
-                Column(
-                    modifier = Modifier
-                        .weight(1.35f)
-                        .fillMaxHeight()
-                        .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.SpaceBetween,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    MainMenuPlayModes(
-                        unlockedLevelsCount = unlockedLevelsCount,
-                        dailyQuestHighScore = gameStats?.dailyQuestHighScore ?: 0,
-                        compact = !isTabletOrFoldable,
-                        onStartDailyQuest = {
-                            viewModel.startDailyQuest()
-                            onStartGame()
-                        },
-                        onStartEndless = {
-                            viewModel.startNewGame(GameModeType.ENDLESS)
-                            onStartGame()
-                        },
-                        onOpenLevels = { viewModel.showLevelSelector(true) },
-                        onStartTutorial = onStartTutorial
-                    )
-
-                    MainMenuUtilityGrid(
-                        unlockedTrophiesCount = unlockedTrophiesCount,
-                        activeThemeName = uiState.activeTheme.name,
-                        compact = true,
-                        singleRow = isLandscape && !isTabletOrFoldable,
-                        onOpenAchievements = { viewModel.showAchievements(true) },
-                        onOpenThemes = { viewModel.showThemeSelector(true) },
-                        onOpenBackup = { viewModel.showLocalBackup(true) },
-                        onOpenCredits = { viewModel.showCredits(true) }
-                    )
                 }
             }
-        } else {
-            // Adaptive Portrait Layout for All Samsung Phones - Dynamically scaled with smooth scrolling
-            val isCompactScreen = screenHeight < 920.dp
-            val phoneScrollState = rememberScrollState()
 
+            // Center Branding & Title Area
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .widthIn(max = 460.dp)
-                    .align(Alignment.Center)
-                    .windowInsetsPadding(if (uiState.isImmersiveModeEnabled) WindowInsets.displayCutout else WindowInsets.safeDrawing)
-                    .padding(horizontal = 14.dp)
-                    .verticalScroll(phoneScrollState),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(if (isCompactScreen) 6.dp else 8.dp)
+                modifier = Modifier.fillMaxWidth()
             ) {
-                // Top Action & Branding Header
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.fillMaxWidth()
+                // Classic Glowing Forge Emblem
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.size(68.dp)
                 ) {
-                    MainMenuTopQuickBar(
-                        isImmersiveMode = uiState.isImmersiveModeEnabled,
-                        soundFxEnabled = uiState.soundFxEnabled,
-                        musicEnabled = uiState.musicEnabled,
-                        onToggleImmersive = { viewModel.toggleImmersiveMode() },
-                        onToggleSound = { viewModel.toggleSoundFx() },
-                        onToggleMusic = { viewModel.toggleMusic() }
+                    Box(
+                        modifier = Modifier
+                            .size(64.dp)
+                            .scale(pulseGlow)
+                            .clip(CircleShape)
+                            .background(
+                                Brush.radialGradient(
+                                    colors = listOf(
+                                        Color(0xFFFF6D00).copy(alpha = 0.35f),
+                                        Color(0xFF7C4DFF).copy(alpha = 0.15f),
+                                        Color.Transparent
+                                    )
+                                )
+                            )
                     )
 
-                    ForgeHeroEmblem(
-                        pulseGlow = pulseGlow,
-                        sizeDp = if (isCompactScreen) 48 else 58
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = Color(0xFF221733),
+                        shadowElevation = 8.dp,
+                        modifier = Modifier
+                            .size(50.dp)
+                            .border(
+                                width = 1.5.dp,
+                                brush = Brush.linearGradient(
+                                    listOf(
+                                        Color(0xFFFF9100),
+                                        Color(0xFFFF3D00),
+                                        Color(0xFF7C4DFF)
+                                    )
+                                ),
+                                shape = RoundedCornerShape(16.dp)
+                            )
+                    ) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    Brush.verticalGradient(
+                                        listOf(
+                                            Color(0xFFFF6D00).copy(alpha = 0.25f),
+                                            Color(0xFF1E142B)
+                                        )
+                                    )
+                                )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.LocalFireDepartment,
+                                contentDescription = "Tile Forge",
+                                tint = Color(0xFFFF9100),
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Text(
+                    text = "TILE FORGE",
+                    fontSize = 26.sp,
+                    fontWeight = FontWeight.Black,
+                    color = Color.White,
+                    letterSpacing = 2.sp
+                )
+
+                Text(
+                    text = "Slide • Merge • Forge Relics",
+                    fontSize = 11.5.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.White.copy(alpha = 0.65f),
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                // High score badge
+                val animatedHighScore by animateIntAsState(
+                    targetValue = highScore,
+                    animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing),
+                    label = "mainMenuHighScore"
+                )
+
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color(0xFF1B1426),
+                    modifier = Modifier.border(
+                        width = 1.dp,
+                        color = if (highScore > 0) Color(0xFFFFD700).copy(alpha = 0.40f) else Color.White.copy(alpha = 0.12f),
+                        shape = RoundedCornerShape(12.dp)
                     )
-
-                    Spacer(modifier = Modifier.height(2.dp))
-
-                    Text(
-                        text = "TILE FORGE",
-                        fontSize = if (isCompactScreen) 21.sp else 24.sp,
-                        fontWeight = FontWeight.Black,
-                        color = Color.White,
-                        letterSpacing = 2.sp
-                    )
-
-                    Text(
-                        text = "Slide • Merge • Gather Energy • Forge Relics",
-                        fontSize = if (isCompactScreen) 10.sp else 11.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color.White.copy(alpha = 0.65f),
-                        textAlign = TextAlign.Center
-                    )
-
-                    Spacer(modifier = Modifier.height(3.dp))
-
+                ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
                     ) {
-                        HighScorePill(highScore = highScore)
+                        Icon(
+                            imageVector = Icons.Filled.Star,
+                            contentDescription = null,
+                            tint = if (highScore > 0) Color(0xFFFFD700) else Color.White.copy(alpha = 0.5f),
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = if (highScore > 0) "BEST SCORE: $animatedHighScore" else "BEST SCORE: 0",
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (highScore > 0) Color(0xFFFFE082) else Color.White.copy(alpha = 0.7f),
+                            letterSpacing = 0.5.sp
+                        )
                     }
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    FantasyQuoteCard(
-                        quote = currentQuote,
-                        compact = true,
-                        onRefreshQuote = { currentQuote = FantasyQuotes.getRandomQuote() }
-                    )
                 }
+            }
 
-                // Middle & Bottom: Primary Play Modes + Quick Utilities
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(if (isCompactScreen) 6.dp else 8.dp)
-                ) {
-                    MainMenuPlayModes(
-                        unlockedLevelsCount = unlockedLevelsCount,
-                        dailyQuestHighScore = gameStats?.dailyQuestHighScore ?: 0,
-                        compact = true,
-                        onStartDailyQuest = {
-                            viewModel.startDailyQuest()
-                            onStartGame()
-                        },
-                        onStartEndless = {
+            // Quotes Card (Words of the Forge / Fantasy & Anime Quotes)
+            FantasyQuoteCard(
+                quote = currentQuote,
+                onRefreshQuote = { currentQuote = FantasyQuotes.getRandomQuote() }
+            )
+
+            // Primary Game Action Buttons (Play, Challenges, Daily)
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Main "PLAY" Button (Endless Mode)
+                Surface(
+                    shape = RoundedCornerShape(14.dp),
+                    color = Color(0xFF261938),
+                    shadowElevation = 6.dp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(54.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .border(
+                            width = 1.5.dp,
+                            brush = Brush.horizontalGradient(
+                                listOf(Color(0xFFFF6D00), Color(0xFFFFAB00))
+                            ),
+                            shape = RoundedCornerShape(14.dp)
+                        )
+                        .clickable {
                             viewModel.startNewGame(GameModeType.ENDLESS)
                             onStartGame()
-                        },
-                        onOpenLevels = { viewModel.showLevelSelector(true) },
-                        onStartTutorial = onStartTutorial
-                    )
-
-                    // Secondary Tools & Customization Grid
-                    MainMenuUtilityGrid(
-                        unlockedTrophiesCount = unlockedTrophiesCount,
-                        activeThemeName = uiState.activeTheme.name,
-                        compact = true,
-                        onOpenAchievements = { viewModel.showAchievements(true) },
-                        onOpenThemes = { viewModel.showThemeSelector(true) },
-                        onOpenBackup = { viewModel.showLocalBackup(true) },
-                        onOpenCredits = { viewModel.showCredits(true) }
-                    )
-
-                    // Safe padding at the bottom for Samsung gesture hint or 3-button navigation
-                    Spacer(modifier = Modifier.height(20.dp))
+                        }
+                        .testTag("start_endless_btn")
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                Brush.horizontalGradient(
+                                    listOf(
+                                        Color(0xFFFF6D00).copy(alpha = 0.35f),
+                                        Color(0xFF261938)
+                                    )
+                                )
+                            )
+                            .padding(horizontal = 14.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = Color(0xFFFF6D00),
+                                    modifier = Modifier.size(34.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            imageVector = Icons.Filled.PlayArrow,
+                                            contentDescription = null,
+                                            tint = Color.White,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Column {
+                                    Text(
+                                        text = "PLAY FORGE",
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Black,
+                                        color = Color.White
+                                    )
+                                    Text(
+                                        text = "Endless sliding puzzle",
+                                        fontSize = 10.5.sp,
+                                        color = Color.White.copy(alpha = 0.70f)
+                                    )
+                                }
+                            }
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                contentDescription = null,
+                                tint = Color(0xFFFFAB00),
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
                 }
+
+                // Challenge Stages Button
+                Surface(
+                    shape = RoundedCornerShape(14.dp),
+                    color = Color(0xFF1E152E),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .border(
+                            width = 1.2.dp,
+                            brush = Brush.horizontalGradient(
+                                listOf(Color(0xFF7C4DFF), Color(0xFFB388FF))
+                            ),
+                            shape = RoundedCornerShape(14.dp)
+                        )
+                        .clickable { viewModel.showLevelSelector(true) }
+                        .testTag("open_levels_btn")
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                Brush.horizontalGradient(
+                                    listOf(
+                                        Color(0xFF7C4DFF).copy(alpha = 0.25f),
+                                        Color(0xFF1E152E)
+                                    )
+                                )
+                            )
+                            .padding(horizontal = 14.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = Color(0xFF7C4DFF),
+                                    modifier = Modifier.size(30.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            imageVector = Icons.Filled.Star,
+                                            contentDescription = null,
+                                            tint = Color.White,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Column {
+                                    Text(
+                                        text = "CHALLENGE STAGES",
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
+                                    )
+                                    Text(
+                                        text = "10 stages • $unlockedLevelsCount cleared",
+                                        fontSize = 10.sp,
+                                        color = Color.White.copy(alpha = 0.65f)
+                                    )
+                                }
+                            }
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                contentDescription = null,
+                                tint = Color(0xFFB388FF),
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+                }
+
+                // Daily Quest Button
+                Surface(
+                    shape = RoundedCornerShape(14.dp),
+                    color = Color(0xFF132238),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .border(
+                            width = 1.2.dp,
+                            brush = Brush.horizontalGradient(
+                                listOf(Color(0xFF00E5FF), Color(0xFFFFD700))
+                            ),
+                            shape = RoundedCornerShape(14.dp)
+                        )
+                        .clickable {
+                            viewModel.startDailyQuest()
+                            onStartGame()
+                        }
+                        .testTag("start_daily_quest_btn")
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                Brush.horizontalGradient(
+                                    listOf(
+                                        Color(0xFF00E5FF).copy(alpha = 0.22f),
+                                        Color(0xFF132238)
+                                    )
+                                )
+                            )
+                            .padding(horizontal = 14.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = Color(0xFF00B0FF),
+                                    modifier = Modifier.size(30.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            imageVector = Icons.Filled.CalendarMonth,
+                                            contentDescription = null,
+                                            tint = Color.White,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Column {
+                                    Text(
+                                        text = "DAILY QUEST",
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
+                                    )
+                                    Text(
+                                        text = "Worldwide daily trial",
+                                        fontSize = 10.sp,
+                                        color = Color.White.copy(alpha = 0.65f)
+                                    )
+                                }
+                            }
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                contentDescription = null,
+                                tint = Color(0xFF00E5FF),
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Bottom Classic Toolbar (Trophies, Themes, Tutorial, Backup, Credits)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp, bottom = 12.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                ClassicIconAction(
+                    icon = Icons.Filled.EmojiEvents,
+                    label = "Trophies",
+                    tint = Color(0xFFFFD700),
+                    testTag = "main_achievements_btn",
+                    onClick = { viewModel.showAchievements(true) }
+                )
+
+                ClassicIconAction(
+                    icon = Icons.Filled.Palette,
+                    label = "Themes",
+                    tint = Color(0xFF00E5FF),
+                    testTag = "main_themes_btn",
+                    onClick = { viewModel.showThemeSelector(true) }
+                )
+
+                ClassicIconAction(
+                    icon = Icons.Filled.School,
+                    label = "Tutorial",
+                    tint = Color(0xFFFFB74D),
+                    testTag = "start_tutorial_btn",
+                    onClick = onStartTutorial
+                )
+
+                ClassicIconAction(
+                    icon = Icons.Filled.FolderZip,
+                    label = "Backup",
+                    tint = Color(0xFFB388FF),
+                    testTag = "main_local_backup_btn",
+                    onClick = { viewModel.showLocalBackup(true) }
+                )
+
+                ClassicIconAction(
+                    icon = Icons.Filled.Info,
+                    label = "Credits",
+                    tint = Color(0xFF81C784),
+                    testTag = "main_credits_btn",
+                    onClick = { viewModel.showCredits(true) }
+                )
             }
         }
 
@@ -455,807 +737,19 @@ fun MainMenuScreen(
 }
 
 /**
- * Modern, clean glowing emblem for Tile Forge
+ * Words of the Forge / Fantasy Quote Card on the Main Menu
  */
-@Composable
-private fun ForgeHeroEmblem(pulseGlow: Float, sizeDp: Int = 64) {
-    val totalSize = (sizeDp * 1.25f).dp
-    val auraSize = (sizeDp * 1.125f).dp
-    val emblemSize = sizeDp.dp
-    val iconSize = (sizeDp * 0.56f).dp
-
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = Modifier.size(totalSize)
-    ) {
-        // Glowing aura
-        Box(
-            modifier = Modifier
-                .size(auraSize)
-                .scale(pulseGlow)
-                .clip(CircleShape)
-                .background(
-                    Brush.radialGradient(
-                        colors = listOf(
-                            Color(0xFFFF6D00).copy(alpha = 0.35f),
-                            Color(0xFF7C4DFF).copy(alpha = 0.15f),
-                            Color.Transparent
-                        )
-                    )
-                )
-        )
-
-        // Center Tile Emblem
-        Surface(
-            shape = RoundedCornerShape((sizeDp * 0.3f).dp),
-            color = Color(0xFF221733),
-            shadowElevation = 6.dp,
-            modifier = Modifier
-                .size(emblemSize)
-                .border(
-                    width = 1.5.dp,
-                    brush = Brush.linearGradient(
-                        listOf(
-                            Color(0xFFFF9100),
-                            Color(0xFFFF3D00),
-                            Color(0xFF7C4DFF)
-                        )
-                    ),
-                    shape = RoundedCornerShape((sizeDp * 0.3f).dp)
-                )
-        ) {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            listOf(
-                                Color(0xFFFF6D00).copy(alpha = 0.25f),
-                                Color(0xFF1E142B)
-                            )
-                        )
-                    )
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.LocalFireDepartment,
-                    contentDescription = "Tile Forge Emblem",
-                    tint = Color(0xFFFF9100),
-                    modifier = Modifier.size(iconSize)
-                )
-            }
-        }
-    }
-}
-
-/**
- * Sleek High Score Tag
- */
-@Composable
-private fun HighScorePill(highScore: Int) {
-    val animatedHighScore by animateIntAsState(
-        targetValue = highScore,
-        animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing),
-        label = "mainMenuHighScore"
-    )
-
-    Surface(
-        shape = RoundedCornerShape(12.dp),
-        color = Color(0xFF1B1426),
-        modifier = Modifier.border(
-            width = 1.dp,
-            color = if (highScore > 0) Color(0xFFFFD700).copy(alpha = 0.35f) else Color.White.copy(alpha = 0.12f),
-            shape = RoundedCornerShape(12.dp)
-        )
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Filled.Star,
-                contentDescription = null,
-                tint = if (highScore > 0) Color(0xFFFFD700) else Color.White.copy(alpha = 0.5f),
-                modifier = Modifier.size(14.dp)
-            )
-            Spacer(modifier = Modifier.width(5.dp))
-            Text(
-                text = if (highScore > 0) "BEST SCORE: $animatedHighScore" else "BEST SCORE: 0",
-                fontSize = 11.5.sp,
-                fontWeight = FontWeight.Bold,
-                color = if (highScore > 0) Color(0xFFFFE082) else Color.White.copy(alpha = 0.7f),
-                letterSpacing = 0.5.sp
-            )
-        }
-    }
-}
-
-/**
- * Primary Game Mode Selection Cards
- */
-@Composable
-private fun MainMenuPlayModes(
-    unlockedLevelsCount: Int,
-    dailyQuestHighScore: Int,
-    compact: Boolean = false,
-    onStartDailyQuest: () -> Unit,
-    onStartEndless: () -> Unit,
-    onOpenLevels: () -> Unit,
-    onStartTutorial: () -> Unit = {}
-) {
-    val cardPaddingV = if (compact) 8.dp else 12.dp
-    val cardPaddingH = if (compact) 12.dp else 16.dp
-    val iconBoxSize = if (compact) 34.dp else 40.dp
-    val iconSize = if (compact) 18.dp else 22.dp
-    val titleSize = if (compact) 14.5.sp else 16.sp
-    val subtitleSize = if (compact) 10.5.sp else 11.5.sp
-    val spacing = if (compact) 6.dp else 8.dp
-
-    Column(
-        verticalArrangement = Arrangement.spacedBy(spacing),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        // Daily Quest Mode Card (Highlighted with Cyan & Gold)
-        Card(
-            onClick = onStartDailyQuest,
-            shape = RoundedCornerShape(14.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF132238)),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .border(
-                    width = 1.4.dp,
-                    brush = Brush.horizontalGradient(
-                        listOf(
-                            Color(0xFF00E5FF),
-                            Color(0xFFFFD700)
-                        )
-                    ),
-                    shape = RoundedCornerShape(14.dp)
-                )
-                .testTag("start_daily_quest_btn")
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(
-                        Brush.horizontalGradient(
-                            listOf(
-                                Color(0xFF00E5FF).copy(alpha = 0.22f),
-                                Color(0xFF132238).copy(alpha = 0.90f)
-                            )
-                        )
-                    )
-                    .padding(horizontal = cardPaddingH, vertical = cardPaddingV)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Surface(
-                            shape = RoundedCornerShape(10.dp),
-                            color = Color(0xFF00B0FF),
-                            modifier = Modifier.size(iconBoxSize)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    imageVector = Icons.Filled.CalendarMonth,
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(iconSize)
-                                )
-                            }
-                        }
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Column {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = "Daily Quest",
-                                    fontSize = titleSize,
-                                    fontWeight = FontWeight.Black,
-                                    color = Color.White
-                                )
-                                Spacer(modifier = Modifier.width(5.dp))
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(4.dp))
-                                        .background(Color(0xFFFFD700).copy(alpha = 0.25f))
-                                        .padding(horizontal = 4.dp, vertical = 1.dp)
-                                ) {
-                                    Text(
-                                        text = "SEED",
-                                        fontSize = 7.5.sp,
-                                        fontWeight = FontWeight.Black,
-                                        color = Color(0xFFFFD700)
-                                    )
-                                }
-                            }
-                            Text(
-                                text = if (dailyQuestHighScore > 0) "Daily trial • Best: $dailyQuestHighScore" else "Fixed daily board • High score trial",
-                                fontSize = subtitleSize,
-                                color = Color.White.copy(alpha = 0.75f)
-                            )
-                        }
-                    }
-
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                        contentDescription = "Play Daily Quest",
-                        tint = Color(0xFF00E5FF),
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-            }
-        }
-
-        // Endless Mode Hero Card
-        Card(
-            onClick = onStartEndless,
-            shape = RoundedCornerShape(14.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF261938)),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .border(
-                    width = 1.4.dp,
-                    brush = Brush.horizontalGradient(
-                        listOf(
-                            Color(0xFFFF6D00),
-                            Color(0xFFFFAB00)
-                        )
-                    ),
-                    shape = RoundedCornerShape(14.dp)
-                )
-                .testTag("start_endless_btn")
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(
-                        Brush.horizontalGradient(
-                            listOf(
-                                Color(0xFFFF6D00).copy(alpha = 0.22f),
-                                Color(0xFF261938).copy(alpha = 0.85f)
-                            )
-                        )
-                    )
-                    .padding(horizontal = cardPaddingH, vertical = cardPaddingV)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Surface(
-                            shape = RoundedCornerShape(10.dp),
-                            color = Color(0xFFFF6D00),
-                            modifier = Modifier.size(iconBoxSize)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    imageVector = Icons.Filled.AllInclusive,
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(iconSize)
-                                )
-                            }
-                        }
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Column {
-                            Text(
-                                text = "Endless Mode",
-                                fontSize = titleSize,
-                                fontWeight = FontWeight.Black,
-                                color = Color.White
-                            )
-                            Text(
-                                text = "Slide, merge & forge high scores",
-                                fontSize = subtitleSize,
-                                color = Color.White.copy(alpha = 0.7f)
-                            )
-                        }
-                    }
-
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                        contentDescription = "Play Endless",
-                        tint = Color(0xFFFFAB00),
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-            }
-        }
-
-        // Challenge Levels Card
-        Card(
-            onClick = onOpenLevels,
-            shape = RoundedCornerShape(14.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E152E)),
-            elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .border(
-                    width = 1.2.dp,
-                    brush = Brush.horizontalGradient(
-                        listOf(
-                            Color(0xFF7C4DFF),
-                            Color(0xFFB388FF)
-                        )
-                    ),
-                    shape = RoundedCornerShape(14.dp)
-                )
-                .testTag("open_levels_btn")
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(
-                        Brush.horizontalGradient(
-                            listOf(
-                                Color(0xFF7C4DFF).copy(alpha = 0.20f),
-                                Color(0xFF1E152E).copy(alpha = 0.85f)
-                            )
-                        )
-                    )
-                    .padding(horizontal = cardPaddingH, vertical = cardPaddingV)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Surface(
-                            shape = RoundedCornerShape(10.dp),
-                            color = Color(0xFF7C4DFF),
-                            modifier = Modifier.size(iconBoxSize)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    imageVector = Icons.Filled.PlayArrow,
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(iconSize)
-                                )
-                            }
-                        }
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Column {
-                            Text(
-                                text = "Challenge Levels",
-                                fontSize = titleSize,
-                                fontWeight = FontWeight.Black,
-                                color = Color.White
-                            )
-                            Text(
-                                text = "10 stages • $unlockedLevelsCount cleared",
-                                fontSize = subtitleSize,
-                                color = Color.White.copy(alpha = 0.7f)
-                            )
-                        }
-                    }
-
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                        contentDescription = "Open Levels",
-                        tint = Color(0xFFB388FF),
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-            }
-        }
-
-        // Interactive Tutorial Card (Highlighted Academy theme)
-        Card(
-            onClick = onStartTutorial,
-            shape = RoundedCornerShape(14.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1730)),
-            elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .border(
-                    width = 1.3.dp,
-                    brush = Brush.horizontalGradient(
-                        listOf(
-                            Color(0xFFFFD700),
-                            Color(0xFF00E5FF)
-                        )
-                    ),
-                    shape = RoundedCornerShape(14.dp)
-                )
-                .testTag("start_tutorial_btn")
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(
-                        Brush.horizontalGradient(
-                            listOf(
-                                Color(0xFFFFD700).copy(alpha = 0.18f),
-                                Color(0xFF1E1730).copy(alpha = 0.90f)
-                            )
-                        )
-                    )
-                    .padding(horizontal = cardPaddingH, vertical = cardPaddingV)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Surface(
-                            shape = RoundedCornerShape(10.dp),
-                            color = Color(0xFFFFD700),
-                            modifier = Modifier.size(iconBoxSize)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    imageVector = Icons.Filled.School,
-                                    contentDescription = null,
-                                    tint = Color(0xFF140D1F),
-                                    modifier = Modifier.size(iconSize)
-                                )
-                            }
-                        }
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Column {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = "Interactive Tutorial",
-                                    fontSize = titleSize,
-                                    fontWeight = FontWeight.Black,
-                                    color = Color.White
-                                )
-                                Spacer(modifier = Modifier.width(5.dp))
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(4.dp))
-                                        .background(Color(0xFF00E5FF).copy(alpha = 0.25f))
-                                        .padding(horizontal = 4.dp, vertical = 1.dp)
-                                ) {
-                                    Text(
-                                        text = "LEARN",
-                                        fontSize = 7.5.sp,
-                                        fontWeight = FontWeight.Black,
-                                        color = Color(0xFF00E5FF)
-                                    )
-                                }
-                            }
-                            Text(
-                                text = "Slide, merge numbers & forge relics",
-                                fontSize = subtitleSize,
-                                color = Color.White.copy(alpha = 0.75f)
-                            )
-                        }
-                    }
-
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                        contentDescription = "Start Tutorial",
-                        tint = Color(0xFFFFD700),
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-            }
-        }
-    }
-}
-
-/**
- * Clean Minimalist Utility Grid or Single-Row Bar for Trophies, Themes, Save Backup & Credits
- */
-@Composable
-private fun MainMenuUtilityGrid(
-    unlockedTrophiesCount: Int,
-    activeThemeName: String,
-    compact: Boolean = false,
-    singleRow: Boolean = false,
-    onOpenAchievements: () -> Unit,
-    onOpenThemes: () -> Unit,
-    onOpenBackup: () -> Unit,
-    onOpenCredits: () -> Unit
-) {
-    val spacing = if (compact) 6.dp else 8.dp
-
-    if (singleRow) {
-        // High-efficiency single horizontal toolbar for Landscape mode
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(spacing),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            UtilityGridItem(
-                icon = Icons.Filled.EmojiEvents,
-                title = "Trophies",
-                subtitle = "$unlockedTrophiesCount Unlocked",
-                accentColor = Color(0xFFFFD700),
-                compact = true,
-                singleRow = true,
-                testTag = "main_achievements_btn",
-                onClick = onOpenAchievements,
-                modifier = Modifier.weight(1f)
-            )
-
-            UtilityGridItem(
-                icon = Icons.Filled.Palette,
-                title = "Themes",
-                subtitle = activeThemeName,
-                accentColor = Color(0xFF00E5FF),
-                compact = true,
-                singleRow = true,
-                testTag = "main_themes_btn",
-                onClick = onOpenThemes,
-                modifier = Modifier.weight(1f)
-            )
-
-            UtilityGridItem(
-                icon = Icons.Filled.FolderZip,
-                title = "Backup",
-                subtitle = ".ZIP Export",
-                accentColor = Color(0xFFB388FF),
-                compact = true,
-                singleRow = true,
-                testTag = "main_local_backup_btn",
-                onClick = onOpenBackup,
-                modifier = Modifier.weight(1f)
-            )
-
-            UtilityGridItem(
-                icon = Icons.Filled.Info,
-                title = "Credits",
-                subtitle = "Rules & Info",
-                accentColor = Color(0xFF81C784),
-                compact = true,
-                singleRow = true,
-                testTag = "main_credits_btn",
-                onClick = onOpenCredits,
-                modifier = Modifier.weight(1f)
-            )
-        }
-    } else {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(spacing),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(spacing),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                UtilityGridItem(
-                    icon = Icons.Filled.EmojiEvents,
-                    title = "Trophies",
-                    subtitle = "$unlockedTrophiesCount Unlocked",
-                    accentColor = Color(0xFFFFD700),
-                    compact = compact,
-                    testTag = "main_achievements_btn",
-                    onClick = onOpenAchievements,
-                    modifier = Modifier.weight(1f)
-                )
-
-                UtilityGridItem(
-                    icon = Icons.Filled.Palette,
-                    title = "Themes",
-                    subtitle = activeThemeName,
-                    accentColor = Color(0xFF00E5FF),
-                    compact = compact,
-                    testTag = "main_themes_btn",
-                    onClick = onOpenThemes,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(spacing),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                UtilityGridItem(
-                    icon = Icons.Filled.FolderZip,
-                    title = "Save Backup",
-                    subtitle = ".ZIP Export",
-                    accentColor = Color(0xFFB388FF),
-                    compact = compact,
-                    testTag = "main_local_backup_btn",
-                    onClick = onOpenBackup,
-                    modifier = Modifier.weight(1f)
-                )
-
-                UtilityGridItem(
-                    icon = Icons.Filled.Info,
-                    title = "Credits",
-                    subtitle = "Rules & Info",
-                    accentColor = Color(0xFF81C784),
-                    compact = compact,
-                    testTag = "main_credits_btn",
-                    onClick = onOpenCredits,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun UtilityGridItem(
-    icon: ImageVector,
-    title: String,
-    subtitle: String,
-    accentColor: Color,
-    testTag: String,
-    compact: Boolean = false,
-    singleRow: Boolean = false,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val padV = if (singleRow) 5.dp else if (compact) 6.dp else 9.dp
-    val padH = if (singleRow) 6.dp else if (compact) 8.dp else 11.dp
-    val iconSurfaceSize = if (singleRow) 24.dp else if (compact) 26.dp else 30.dp
-    val iconSize = if (singleRow) 13.dp else if (compact) 14.dp else 16.dp
-    val titleSize = if (singleRow) 11.sp else if (compact) 11.5.sp else 13.sp
-    val subtitleSize = if (singleRow) 8.5.sp else if (compact) 9.sp else 10.5.sp
-
-    Surface(
-        shape = RoundedCornerShape(12.dp),
-        color = Color(0xFF1B1428),
-        modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
-            .border(
-                width = 1.dp,
-                color = accentColor.copy(alpha = 0.28f),
-                shape = RoundedCornerShape(12.dp)
-            )
-            .clickable { onClick() }
-            .testTag(testTag)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = if (singleRow) Arrangement.Center else Arrangement.Start,
-            modifier = Modifier.padding(horizontal = padH, vertical = padV)
-        ) {
-            Surface(
-                shape = CircleShape,
-                color = accentColor.copy(alpha = 0.15f),
-                modifier = Modifier.size(iconSurfaceSize)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = title,
-                        tint = accentColor,
-                        modifier = Modifier.size(iconSize)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.width(if (singleRow) 6.dp else 8.dp))
-
-            Column {
-                Text(
-                    text = title,
-                    fontSize = titleSize,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    maxLines = 1
-                )
-                Text(
-                    text = subtitle,
-                    fontSize = subtitleSize,
-                    color = Color.White.copy(alpha = 0.55f),
-                    maxLines = 1
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun MainMenuTopQuickBar(
-    isImmersiveMode: Boolean,
-    soundFxEnabled: Boolean,
-    musicEnabled: Boolean,
-    onToggleImmersive: () -> Unit,
-    onToggleSound: () -> Unit,
-    onToggleMusic: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 6.dp),
-        horizontalArrangement = Arrangement.End,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Surface(
-            shape = RoundedCornerShape(12.dp),
-            color = Color(0xFF1B1428),
-            modifier = Modifier.border(
-                1.dp,
-                Color.White.copy(alpha = 0.12f),
-                RoundedCornerShape(12.dp)
-            )
-        ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
-                horizontalArrangement = Arrangement.spacedBy(2.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                androidx.compose.material3.IconButton(
-                    onClick = onToggleImmersive,
-                    modifier = Modifier
-                        .size(36.dp)
-                        .testTag("main_immersive_toggle_btn")
-                ) {
-                    Icon(
-                        imageVector = if (isImmersiveMode) Icons.Filled.FullscreenExit else Icons.Filled.Fullscreen,
-                        contentDescription = if (isImmersiveMode) "Exit Fullscreen" else "Immersive Fullscreen",
-                        tint = if (isImmersiveMode) Color(0xFF00E5FF) else Color.White.copy(alpha = 0.7f),
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-
-                androidx.compose.material3.IconButton(
-                    onClick = onToggleSound,
-                    modifier = Modifier
-                        .size(36.dp)
-                        .testTag("main_sound_toggle_btn")
-                ) {
-                    Icon(
-                        imageVector = if (soundFxEnabled) Icons.Filled.VolumeUp else Icons.Filled.VolumeOff,
-                        contentDescription = "Toggle Sound",
-                        tint = if (soundFxEnabled) Color(0xFF80D8FF) else Color.Gray,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-
-                androidx.compose.material3.IconButton(
-                    onClick = onToggleMusic,
-                    modifier = Modifier
-                        .size(36.dp)
-                        .testTag("main_music_toggle_btn")
-                ) {
-                    Icon(
-                        imageVector = if (musicEnabled) Icons.Filled.MusicNote else Icons.Filled.MusicOff,
-                        contentDescription = "Toggle Music",
-                        tint = if (musicEnabled) Color(0xFFFF80AB) else Color.Gray,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
-        }
-    }
-}
-
 @Composable
 private fun FantasyQuoteCard(
     quote: FantasyQuote,
-    compact: Boolean = false,
     onRefreshQuote: () -> Unit
 ) {
-    val padH = if (compact) 10.dp else 12.dp
-    val padV = if (compact) 6.dp else 8.dp
-    val quoteFontSize = if (compact) 10.5.sp else 11.sp
-    val quoteLineHeight = if (compact) 14.sp else 15.sp
-    val authorFontSize = if (compact) 9.sp else 9.5.sp
-
     Surface(
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(12.dp),
         color = Color(0xFF1E1528),
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
+            .clip(RoundedCornerShape(12.dp))
             .border(
                 1.dp,
                 Brush.horizontalGradient(
@@ -1264,7 +758,7 @@ private fun FantasyQuoteCard(
                         Color(0xFF7C4DFF).copy(alpha = 0.35f)
                     )
                 ),
-                RoundedCornerShape(14.dp)
+                RoundedCornerShape(12.dp)
             )
             .clickable { onRefreshQuote() }
             .testTag("fantasy_quote_card")
@@ -1280,7 +774,7 @@ private fun FantasyQuoteCard(
                         )
                     )
                 )
-                .padding(horizontal = padH, vertical = padV)
+                .padding(horizontal = 12.dp, vertical = 8.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -1292,54 +786,94 @@ private fun FantasyQuoteCard(
                         imageVector = Icons.Filled.AutoAwesome,
                         contentDescription = null,
                         tint = Color(0xFFFFD700),
-                        modifier = Modifier.size(12.dp)
+                        modifier = Modifier.size(13.dp)
                     )
-                    Spacer(modifier = Modifier.width(4.dp))
+                    Spacer(modifier = Modifier.width(5.dp))
                     Text(
                         text = "WORDS OF THE FORGE • ${quote.loreTag.uppercase()}",
-                        fontSize = if (compact) 8.sp else 8.5.sp,
+                        fontSize = 8.5.sp,
                         fontWeight = FontWeight.Black,
                         color = Color(0xFFFFD700),
                         letterSpacing = 0.6.sp
                     )
                 }
 
-                androidx.compose.material3.IconButton(
+                IconButton(
                     onClick = onRefreshQuote,
                     modifier = Modifier
-                        .size(20.dp)
+                        .size(22.dp)
                         .testTag("refresh_quote_btn")
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Refresh,
                         contentDescription = "New Quote",
-                        tint = Color.White.copy(alpha = 0.6f),
-                        modifier = Modifier.size(12.dp)
+                        tint = Color.White.copy(alpha = 0.7f),
+                        modifier = Modifier.size(13.dp)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(2.dp))
+            Spacer(modifier = Modifier.height(3.dp))
 
             Text(
                 text = "“${quote.quote}”",
-                fontSize = quoteFontSize,
+                fontSize = 11.5.sp,
                 fontStyle = FontStyle.Italic,
                 fontWeight = FontWeight.Medium,
                 color = Color.White.copy(alpha = 0.95f),
-                lineHeight = quoteLineHeight
+                lineHeight = 15.sp
             )
 
-            Spacer(modifier = Modifier.height(2.dp))
+            Spacer(modifier = Modifier.height(3.dp))
 
             Text(
                 text = "— ${quote.speaker}, ${quote.source}",
-                fontSize = authorFontSize,
+                fontSize = 9.5.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF00E5FF).copy(alpha = 0.9f),
+                color = Color(0xFF00E5FF).copy(alpha = 0.90f),
                 textAlign = TextAlign.End,
                 modifier = Modifier.fillMaxWidth()
             )
         }
+    }
+}
+
+@Composable
+private fun ClassicIconAction(
+    icon: ImageVector,
+    label: String,
+    tint: Color,
+    testTag: String,
+    onClick: () -> Unit
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .clip(RoundedCornerShape(8.dp))
+            .clickable { onClick() }
+            .padding(horizontal = 6.dp, vertical = 4.dp)
+            .testTag(testTag)
+    ) {
+        Surface(
+            shape = CircleShape,
+            color = tint.copy(alpha = 0.14f),
+            modifier = Modifier.size(38.dp)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = label,
+                    tint = tint,
+                    modifier = Modifier.size(19.dp)
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(3.dp))
+        Text(
+            text = label,
+            fontSize = 9.5.sp,
+            fontWeight = FontWeight.Medium,
+            color = Color.White.copy(alpha = 0.70f)
+        )
     }
 }
